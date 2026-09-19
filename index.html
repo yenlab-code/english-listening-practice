@@ -3,26 +3,239 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>國中會考英聽練習</title>
+  <title>英聽小熊練習室</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎧</text></svg>">
   <style>
-    :root { color-scheme: light; font-family: system-ui, "Noto Sans TC", "Microsoft JhengHei", sans-serif; color: #17233b; }
-    body { max-width: 820px; margin: 0 auto; padding: 24px 16px 56px; background: #f5f7fb; }
-    h1 { margin: 6px 0 8px; font-size: clamp(1.5rem, 4vw, 2.2rem); }
-    h2 { margin: 28px 0 12px; font-size: 1.15rem; }
-    p { line-height: 1.65; color: #53617a; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
-    .card { display: flex; flex-direction: column; gap: 4px; padding: 14px; border-radius: 12px; background: #fff;
-            border: 1px solid #dce3ed; color: #17233b; text-decoration: none; }
-    .card:hover { border-color: #2566b3; background: #f0f6ff; }
-    .card span { color: #53617a; font-size: .9rem; }
+    :root {
+      color-scheme: light;
+      --bg: #fff8ef; --ink: #4a3b36; --soft: #8a766d; --card: #ffffff; --line: #f1e3d3;
+      --peach: #ffb4a2; --peach-deep: #f08a74; --mint: #bfe6d6; --mint-deep: #3f9d78;
+      --sky: #cfe6ff; --butter: #ffe7a3; --lilac: #7a8cff;
+      font-family: "Arial Rounded MT Bold", system-ui, "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink);
+      background-image: radial-gradient(#ffe2cf 1.2px, transparent 1.2px); background-size: 22px 22px; }
+    main { max-width: 860px; margin: 0 auto; padding: 20px 16px 64px; }
+    .hero { display: flex; align-items: center; gap: 14px; background: var(--card); border: 3px solid var(--line);
+      border-radius: 28px; padding: 18px 20px; box-shadow: 0 8px 0 #f6e6d6; }
+    .bear { width: 118px; height: 118px; flex: none; animation: bob 2.6s ease-in-out infinite; }
+    @keyframes bob { 50% { transform: translateY(-6px) rotate(-2deg); } }
+    @media (prefers-reduced-motion: reduce) { .bear { animation: none; } }
+    .hello h1 { margin: 0 0 4px; font-size: clamp(1.45rem, 5vw, 2.1rem); letter-spacing: .02em; }
+    .bubble { position: relative; display: inline-block; background: var(--butter); border-radius: 16px; padding: 8px 14px;
+      font-weight: 700; margin: 4px 0 10px; }
+    .bubble::before { content: ""; position: absolute; left: -9px; top: 14px; border: 6px solid transparent; border-right: 10px solid var(--butter); }
+    .name { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: .95rem; color: var(--soft); }
+    .name input { font: inherit; color: var(--ink); border: 2px solid var(--line); border-radius: 999px; padding: 6px 14px; width: 11em; background: #fffdf9; }
+    .name input:focus { outline: none; border-color: var(--peach); }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 18px 0; }
+    .stat { background: var(--card); border: 3px solid var(--line); border-radius: 20px; padding: 12px; text-align: center; }
+    .stat b { display: block; font-size: 1.6rem; }
+    .stat span { font-size: .85rem; color: var(--soft); }
+    .stat:nth-child(1) { background: #fff0ec; } .stat:nth-child(2) { background: #eefaf4; } .stat:nth-child(3) { background: #eef5ff; }
+    .go { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 16px; border-radius: 22px;
+      background: var(--peach-deep); color: #fff; font-size: 1.25rem; font-weight: 800; text-decoration: none; box-shadow: 0 6px 0 #d46e59;
+      transition: transform .12s, box-shadow .12s; }
+    .go:hover { transform: translateY(2px); box-shadow: 0 4px 0 #d46e59; }
+    .go:active { transform: translateY(6px); box-shadow: 0 0 0 #d46e59; }
+    .chips { display: flex; gap: 8px; margin: 24px 0 6px; flex-wrap: wrap; }
+    .chip { font: inherit; font-weight: 700; border: 2px solid var(--line); background: var(--card); color: var(--soft);
+      border-radius: 999px; padding: 7px 16px; cursor: pointer; }
+    .chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
+    h2 { font-size: 1rem; color: var(--soft); margin: 20px 4px 10px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 12px; }
+    .vol { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 14px 8px 12px;
+      background: var(--card); border: 3px solid var(--line); border-radius: 22px; color: var(--ink); text-decoration: none;
+      box-shadow: 0 5px 0 #f3e4d4; transition: transform .12s, box-shadow .12s; }
+    .vol:hover { transform: translateY(-3px) rotate(-1deg); box-shadow: 0 8px 0 #f3e4d4; }
+    .vol .num { font-size: 1.9rem; font-weight: 800; line-height: 1.1; }
+    .vol .lbl { font-size: .8rem; color: var(--soft); }
+    .vol .state { font-size: .82rem; margin-top: 4px; color: var(--soft); text-align: center; }
+    .vol.done { background: #f1fbf6; border-color: var(--mint); box-shadow: 0 5px 0 #d5efe4; }
+    .vol.done .state { color: var(--mint-deep); font-weight: 700; }
+    .vol.next { border-color: var(--peach); background: #fff4f0; }
+    .vol .stamp { position: absolute; top: -10px; right: -6px; font-size: 1.5rem; transform: rotate(12deg); }
+    .empty { text-align: center; color: var(--soft); padding: 26px; }
+    footer { margin-top: 36px; background: var(--card); border: 3px dashed var(--line); border-radius: 22px; padding: 16px 18px; color: var(--soft); font-size: .92rem; line-height: 1.7; }
+    footer .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+    footer button { font: inherit; font-weight: 700; border: 2px solid var(--line); background: #fffdf9; color: var(--ink); border-radius: 999px; padding: 7px 14px; cursor: pointer; }
+    footer button:hover { border-color: var(--peach); }
+    @media (max-width: 520px) {
+      .hero { flex-direction: column; text-align: center; }
+      .bubble::before { display: none; }
+      .name { justify-content: center; }
+      .bear { width: 96px; height: 96px; }
+    }
   </style>
 </head>
 <body>
-  <h1>國中會考英聽練習</h1>
-  <p>每回 18 題：基本問答 8 題、言談理解 10 題。選一回開始，戴上耳機，按「開始」。可選「會考模式」（選項用看的）或「磨耳朵模式」（選項用聽的）；答完每題都有中英文講解，整回結束有成績單。作答紀錄只存在你自己的裝置上。</p>
-    <h2>第 1 冊（第 1～25 回）</h2>
-    <div class="grid">
-      <a class="card" href="L001.html"><b>第 1 回</b><span>18 題</span></a>
+<main>
+  <section class="hero">
+    <svg class="bear" viewBox="0 0 120 120" aria-hidden="true">
+      <text x="98" y="22" font-size="16" fill="#f08a74">♪</text>
+      <text x="6" y="30" font-size="13" fill="#7a8cff">♫</text>
+      <circle cx="32" cy="36" r="13" fill="#d6a57c"/><circle cx="32" cy="36" r="7" fill="#f6d2b4"/>
+      <circle cx="88" cy="36" r="13" fill="#d6a57c"/><circle cx="88" cy="36" r="7" fill="#f6d2b4"/>
+      <circle cx="60" cy="66" r="40" fill="#e0b088"/>
+      <path d="M22 62 C22 14, 98 14, 98 62" fill="none" stroke="#7a8cff" stroke-width="7" stroke-linecap="round"/>
+      <rect x="11" y="52" width="17" height="28" rx="8" fill="#7a8cff"/><rect x="92" y="52" width="17" height="28" rx="8" fill="#7a8cff"/>
+      <ellipse cx="60" cy="81" rx="18" ry="13" fill="#f8e0c8"/>
+      <ellipse cx="60" cy="75" rx="5.5" ry="4" fill="#4a3b36"/>
+      <path d="M54 84 Q60 90 66 84" fill="none" stroke="#4a3b36" stroke-width="2.4" stroke-linecap="round"/>
+      <circle cx="45" cy="62" r="5" fill="#4a3b36"/><circle cx="46.6" cy="60.4" r="1.6" fill="#fff"/>
+      <circle cx="75" cy="62" r="5" fill="#4a3b36"/><circle cx="76.6" cy="60.4" r="1.6" fill="#fff"/>
+      <ellipse cx="37" cy="76" rx="6" ry="3.6" fill="#ff9eaa" opacity=".75"/><ellipse cx="83" cy="76" rx="6" ry="3.6" fill="#ff9eaa" opacity=".75"/>
+    </svg>
+    <div class="hello">
+      <h1>英聽小熊練習室</h1>
+      <div class="bubble" id="bubble">戴上耳機，今天也來練一回吧！</div>
+      <label class="name">我的名字 <input id="name" maxlength="20" placeholder="選填，會記在紀錄上"></label>
     </div>
+  </section>
+
+  <section class="stats" aria-label="練習進度">
+    <div class="stat"><b id="doneCount">0</b><span>已完成回數</span></div>
+    <div class="stat"><b id="avg">—</b><span>平均答對率</span></div>
+    <div class="stat"><b id="lastDate">—</b><span>最近練習</span></div>
+  </section>
+
+  <a class="go" id="go" href="#">▶ 開始第 1 回</a>
+
+  <div class="chips" role="group" aria-label="篩選">
+    <button class="chip" data-filter="all" aria-pressed="true">全部</button>
+    <button class="chip" data-filter="todo" aria-pressed="false">還沒練</button>
+    <button class="chip" data-filter="done" aria-pressed="false">練過了</button>
+  </div>
+  <div id="list"></div>
+
+  <footer>
+    <b>🐻 小提醒</b><br>
+    每回 18 題（基本問答 8 題＋言談理解 10 題）。「會考模式」選項用看的，「磨耳朵模式」選項用聽的；每題答完都有中英文講解。<br>
+    完成紀錄只存在<b>這台裝置的這個瀏覽器</b>；換手機、清除瀏覽資料或用無痕模式就看不到了。要交給老師時，可以下載或複製紀錄。
+    <div class="row">
+      <button id="download">⬇ 下載全部作答紀錄</button>
+      <button id="copy">📋 複製成績摘要</button>
+    </div>
+    <div id="note"></div>
+  </footer>
+</main>
+
+<script id="volumes" type="application/json">[{"id": "L001", "number": 1}]</script>
+<script>
+  'use strict';
+  const VOLUMES = JSON.parse(document.getElementById('volumes').textContent);
+  const $ = id => document.getElementById(id);
+  const RECORD_KEY = 'listening-records-v1', NAME_KEY = 'listening-student-name', FILTER_KEY = 'listening-index-filter';
+  const read = key => { try { return localStorage.getItem(key); } catch { return null; } };
+  const write = (key, value) => { try { localStorage.setItem(key, value); } catch {} };
+  let records = {};
+  try { records = JSON.parse(read(RECORD_KEY)) || {}; } catch { records = {}; }
+  const day = iso => { const d = new Date(iso); return `${d.getMonth() + 1}/${d.getDate()}`; };
+  const stars = n => n >= 16 ? '⭐⭐⭐' : n >= 12 ? '⭐⭐' : '⭐';
+
+  const info = VOLUMES.map(v => {
+    const list = records[v.id] || [];
+    const best = list.reduce((m, r) => Math.max(m, r.correct), -1);
+    const last = list[list.length - 1];
+    return { ...v, list, best, last, done: list.length > 0 };
+  });
+  const next = info.find(v => !v.done);
+
+  // Name
+  $('name').value = read(NAME_KEY) || '';
+  const greet = () => {
+    const n = $('name').value.trim();
+    const done = info.filter(v => v.done).length;
+    $('bubble').textContent = n
+      ? (done ? `${n}，你已經完成 ${done} 回了，好棒！` : `嗨，${n}！戴上耳機，一起來練第一回吧！`)
+      : (done ? `已經完成 ${done} 回了，繼續加油！` : '戴上耳機，今天也來練一回吧！');
+  };
+  $('name').addEventListener('input', () => { write(NAME_KEY, $('name').value.trim()); greet(); });
+  greet();
+
+  // Stats
+  const done = info.filter(v => v.done);
+  $('doneCount').textContent = `${done.length}／${info.length}`;
+  if (done.length) {
+    const latest = done.flatMap(v => v.list).sort((a, b) => a.finishedAt < b.finishedAt ? 1 : -1)[0];
+    const pct = Math.round(done.reduce((s, v) => s + v.last.correct / v.last.total, 0) / done.length * 100);
+    $('avg').textContent = pct + '%';
+    $('lastDate').textContent = day(latest.finishedAt);
+  }
+
+  // Continue button
+  const target = next || info[0];
+  if (target) {
+    $('go').href = `${target.id}.html`;
+    $('go').textContent = next ? (done.length ? `▶ 繼續練習：第 ${next.number} 回` : `▶ 開始第 ${next.number} 回`) : '🎉 全部完成！挑一回再複習';
+    if (!next) $('go').href = '#list';
+  } else {
+    $('go').hidden = true;
+  }
+
+  // List, grouped by tens once there are more than ten volumes
+  function render(filter) {
+    const shown = info.filter(v => filter === 'all' || (filter === 'done') === v.done);
+    const list = $('list');
+    list.replaceChildren();
+    if (!shown.length) {
+      const p = document.createElement('p'); p.className = 'empty';
+      p.textContent = filter === 'done' ? '還沒有練過的回次，先從第一回開始吧！' : '全部都練過了，太厲害了！🎉';
+      list.appendChild(p); return;
+    }
+    const groups = new Map();
+    for (const v of shown) {
+      const start = Math.floor((v.number - 1) / 10) * 10 + 1;
+      if (!groups.has(start)) groups.set(start, []);
+      groups.get(start).push(v);
+    }
+    for (const [start, items] of groups) {
+      if (info.length > 10) { const h = document.createElement('h2'); h.textContent = `第 ${start}～${start + 9} 回`; list.appendChild(h); }
+      const grid = document.createElement('div'); grid.className = 'grid';
+      for (const v of items) {
+        const a = document.createElement('a');
+        a.href = `${v.id}.html`;
+        a.className = 'vol' + (v.done ? ' done' : '') + (next && v.id === next.id ? ' next' : '');
+        a.innerHTML = '<span class="lbl">第</span><span class="num"></span><span class="lbl">回</span><span class="state"></span>';
+        a.querySelector('.num').textContent = v.number;
+        const state = a.querySelector('.state');
+        if (v.done) {
+          state.textContent = `${stars(v.best)}\n${day(v.last.finishedAt)} · ${v.last.correct}/${v.last.total}`;
+          state.style.whiteSpace = 'pre-line';
+          if (v.best === v.last.total) { const s = document.createElement('span'); s.className = 'stamp'; s.textContent = '💯'; a.appendChild(s); }
+        } else {
+          state.textContent = next && v.id === next.id ? '👉 下一回' : '還沒練';
+        }
+        a.setAttribute('aria-label', `第 ${v.number} 回，${v.done ? `已完成，最近答對 ${v.last.correct} 題` : '還沒練習'}`);
+        grid.appendChild(a);
+      }
+      list.appendChild(grid);
+    }
+  }
+  const chips = [...document.querySelectorAll('.chip')];
+  const setFilter = f => { chips.forEach(c => c.setAttribute('aria-pressed', String(c.dataset.filter === f))); write(FILTER_KEY, f); render(f); };
+  chips.forEach(c => c.addEventListener('click', () => setFilter(c.dataset.filter)));
+  setFilter(['all', 'todo', 'done'].includes(read(FILTER_KEY)) ? read(FILTER_KEY) : 'all');
+
+  // Export
+  $('download').addEventListener('click', () => {
+    const payload = { student: read(NAME_KEY) || '', exportedAt: new Date().toISOString(), records };
+    const url = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }));
+    const a = document.createElement('a');
+    a.href = url; a.download = `英聽作答紀錄_${(read(NAME_KEY) || '未署名')}_${new Date().toISOString().slice(0, 10)}.json`; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
+  $('copy').addEventListener('click', async () => {
+    const lines = [`英聽練習成績摘要｜${read(NAME_KEY) || '未署名'}｜${new Date().toLocaleDateString('zh-TW')}`];
+    for (const v of info.filter(x => x.done)) {
+      const r = v.last;
+      lines.push(`第${v.number}回：${new Date(r.finishedAt).toLocaleDateString('zh-TW')} 首次答對 ${r.correct}/${r.total}（${r.mode === 'exam' ? '會考模式' : '磨耳朵模式'}，共練 ${v.list.length} 次）`);
+    }
+    if (lines.length === 1) lines.push('還沒有完成的回次。');
+    try { await navigator.clipboard.writeText(lines.join('\n')); $('note').textContent = '已複製，可以貼到 LINE 或 Email 給老師。'; }
+    catch { $('note').textContent = lines.join(' ／ '); }
+  });
+</script>
 </body>
 </html>
