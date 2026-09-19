@@ -139,10 +139,9 @@
   <footer>
     <b>🐻 小提醒</b><br>
     每回 18 題（基本問答 8 題＋言談理解 10 題）。「會考模式」選項用看的，「磨耳朵模式」選項用聽的；每題答完都有中英文講解。<br>
-    完成紀錄只存在<b>這台裝置的這個瀏覽器</b>；換手機、清除瀏覽資料或用無痕模式就看不到了。要交給老師時，可以下載或複製紀錄。
+    每做完一回，成績會<b>自動傳給老師</b>。這個首頁上的星星和進度則只記在<b>這台裝置的這個瀏覽器</b>，換手機或清除瀏覽資料就看不到了（老師那邊的紀錄不受影響）。萬一成績沒傳成功，可以按下面的按鈕複製今天的成績傳給老師。
     <div class="row">
       <button id="copyToday">📋 複製今天的成績（傳給老師）</button>
-      <button id="copy">複製全部成績</button>
       <button id="download">⬇ 下載全部作答紀錄</button>
     </div>
     <div id="note"></div>
@@ -299,15 +298,6 @@
       lines.push(`第${v.number}回 ${r.correct}/${r.total}（${modeName(r.mode)}）${wrong.length ? '錯：' + wrong.join('、') : '全對💯'}`);
     }
     if (lines.length === 1) lines.push('今天還沒有完成的回次。');
-    copyLines(lines);
-  });
-  $('copy').addEventListener('click', () => {
-    const lines = [`英聽練習成績總表｜${read(NAME_KEY) || '未署名'}｜${new Date().toLocaleDateString('zh-TW')}`];
-    for (const v of info.filter(x => x.done)) {
-      const r = v.last;
-      lines.push(`第${v.number}回 ${day(r.finishedAt)} ${r.correct}/${r.total}（練 ${v.list.length} 次）`);
-    }
-    if (lines.length === 1) lines.push('還沒有完成的回次。');
     copyLines(lines);
   });
 </script>
