@@ -357,6 +357,7 @@
       try {
         for (const step of steps) {
           if (typeof step === 'number') await sleep(step, t);
+          else if (typeof step === 'function') step();
           else if (typeof step === 'object') await clip(step.file, t, step.until);
           else await clip(step, t);
         }
@@ -375,8 +376,15 @@
     }
 
     const letterStep = o => ({ file: o.letterAudio, until: o.letterEnd + 0.12 });
-    function questionSteps(q) {
-      const steps = [q.numberAudio, listenMode === 'exam' ? P.preview_options : P.after_number];
+    function questionSteps(q, preview) {
+      const steps = [];
+      if (preview && listenMode === 'exam') {
+        // Reading time comes before the question number, like turning to the item in the test booklet.
+        for (let left = Math.ceil(P.preview_options / 1000); left > 0; left--) {
+          steps.push(() => status(`先看一下 A／B／C 選項…${left}`), Math.min(1000, P.preview_options - (left - 1) * 1000));
+        }
+      }
+      steps.push(() => status('播放中，請仔細聽。'), q.numberAudio, P.after_number);
       for (let round = 0; round < 2; round++) {
         q.passage.forEach((line, i) => { steps.push(line.audio); if (i < q.passage.length - 1) steps.push(P.between_lines); });
         steps.push(round === 0 ? P.between_repeats : P.after_passage);
@@ -399,7 +407,7 @@
       return steps;
     }
 
-    async function playQuestion() {
+    async function playQuestion(preview = false) {
       const q = current();
       paused = false;
       $('pause').textContent = '暫停';
@@ -408,7 +416,7 @@
       setAnswers(false);
       status(listenMode === 'exam' ? '先看一下 A／B／C 選項，播放開始後仔細聽。' : '播放中，請仔細聽。');
       setMood('listening');
-      if (await run(questionSteps(q))) {
+      if (await run(questionSteps(q, preview))) {
         $('replay').disabled = false;
         setMood('idle');
         setAnswers(true);
@@ -433,7 +441,7 @@
         p.textContent = `(${letter}) ${q.options[letter].text}`;
         booklet.appendChild(p);
       }
-      playQuestion();
+      playQuestion(true);
     }
 
     function renderReview(q, picked) {
