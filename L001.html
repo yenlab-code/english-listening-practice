@@ -201,7 +201,7 @@
       <button id="restart">整回重來</button>
       <button id="export">下載作答紀錄</button>
       <button id="copyTeacher">📋 複製成績（傳給老師）</button>
-      <button id="copyPrompt">🤖 複製 AI 家教檢討提示（貼到 Claude）</button>
+      <button id="copyPrompt">🤖 複製 AI 家教檢討提示（貼到 ChatGPT）</button>
     </div>
     <p class="muted" id="copyNote"></p>
     <details><summary>檢討提示內容</summary><textarea id="prompt" readonly></textarea></details>
@@ -730,7 +730,7 @@
     });
     $('copyPrompt').addEventListener('click', async () => {
       const text = $('prompt').value;
-      try { await navigator.clipboard.writeText(text); $('copyNote').textContent = '已複製。到 Claude 專案貼上即可開始檢討；也可以開語音模式讓 Claude 用說的講解。'; }
+      try { await navigator.clipboard.writeText(text); $('copyNote').textContent = '已複製。打開 ChatGPT 貼上就可以開始檢討；也可以開語音模式，讓 ChatGPT 用說的講解。'; }
       catch { $('prompt').closest('details').open = true; $('prompt').select(); $('copyNote').textContent = '無法自動複製，請展開下方內容手動複製（Ctrl+C）。'; }
     });
   </script>
