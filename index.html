@@ -39,7 +39,19 @@
       transition: transform .12s, box-shadow .12s; }
     .go:hover { transform: translateY(2px); box-shadow: 0 4px 0 #d46e59; }
     .go:active { transform: translateY(6px); box-shadow: 0 0 0 #d46e59; }
-    .chips { display: flex; gap: 8px; margin: 24px 0 6px; flex-wrap: wrap; }
+    .picker { margin-top: 22px; background: var(--card); border: 3px solid var(--line); border-radius: 26px; padding: 16px 16px 18px; box-shadow: 0 7px 0 #f6e6d6; }
+    .picker-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .picker-head b { font-size: 1.1rem; }
+    .jump { display: flex; align-items: center; gap: 6px; color: var(--soft); font-size: .92rem; }
+    .jump input { font: inherit; width: 4.2em; text-align: center; border: 2px solid var(--line); border-radius: 999px; padding: 5px 6px; background: #fffdf9; color: var(--ink); }
+    .jump button { font: inherit; font-weight: 800; border: 0; background: var(--mint-deep); color: #fff; border-radius: 999px; padding: 6px 12px; cursor: pointer; }
+    .ranges { display: flex; gap: 8px; overflow-x: auto; padding: 12px 2px 6px; scroll-snap-type: x proximity; scrollbar-width: thin; }
+    .range { flex: none; scroll-snap-align: start; font: inherit; font-weight: 800; cursor: pointer; border: 2px solid var(--line); background: #fffdf9;
+      color: var(--ink); border-radius: 16px; padding: 6px 12px; text-align: center; line-height: 1.25; }
+    .range small { display: block; font-weight: 700; font-size: .75rem; color: var(--soft); }
+    .range.full { background: #eefaf4; border-color: var(--mint); }
+    .range[aria-selected="true"] { background: var(--butter); border-color: #f5c95c; }
+    .chips { display: flex; gap: 8px; margin: 8px 0 4px; flex-wrap: wrap; }
     .chip { font: inherit; font-weight: 700; border: 2px solid var(--line); background: var(--card); color: var(--soft);
       border-radius: 999px; padding: 7px 16px; cursor: pointer; }
     .chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
@@ -66,6 +78,14 @@
       .bubble::before { display: none; }
       .name { justify-content: center; }
       .bear { width: 96px; height: 96px; }
+      .grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+      .vol { padding: 10px 4px 9px; border-radius: 18px; }
+      .vol .num { font-size: 1.5rem; }
+      .vol .lbl { font-size: .72rem; }
+      .vol .state { font-size: .74rem; margin-top: 2px; }
+      .picker { padding: 14px 12px 16px; }
+      .stat { padding: 10px 4px; }
+      .stat b { font-size: 1.3rem; white-space: nowrap; }
     }
   </style>
 </head>
@@ -102,20 +122,28 @@
 
   <a class="go" id="go" href="#">▶ 開始第 1 回</a>
 
-  <div class="chips" role="group" aria-label="篩選">
-    <button class="chip" data-filter="all" aria-pressed="true">全部</button>
-    <button class="chip" data-filter="todo" aria-pressed="false">還沒練</button>
-    <button class="chip" data-filter="done" aria-pressed="false">練過了</button>
-  </div>
-  <div id="list"></div>
+  <section class="picker" id="list">
+    <div class="picker-head">
+      <b>選一回練習</b>
+      <form class="jump" id="jump"><label>跳到第 <input id="jumpNo" type="number" inputmode="numeric" min="1"> 回</label><button>Go</button></form>
+    </div>
+    <div class="ranges" id="ranges" role="tablist" aria-label="回數範圍"></div>
+    <div class="chips" role="group" aria-label="篩選">
+      <button class="chip" data-filter="all" aria-pressed="true">全部</button>
+      <button class="chip" data-filter="todo" aria-pressed="false">還沒練</button>
+      <button class="chip" data-filter="done" aria-pressed="false">練過了</button>
+    </div>
+    <div id="cards"></div>
+  </section>
 
   <footer>
     <b>🐻 小提醒</b><br>
     每回 18 題（基本問答 8 題＋言談理解 10 題）。「會考模式」選項用看的，「磨耳朵模式」選項用聽的；每題答完都有中英文講解。<br>
     完成紀錄只存在<b>這台裝置的這個瀏覽器</b>；換手機、清除瀏覽資料或用無痕模式就看不到了。要交給老師時，可以下載或複製紀錄。
     <div class="row">
+      <button id="copyToday">📋 複製今天的成績（傳給老師）</button>
+      <button id="copy">複製全部成績</button>
       <button id="download">⬇ 下載全部作答紀錄</button>
-      <button id="copy">📋 複製成績摘要</button>
     </div>
     <div id="note"></div>
   </footer>
@@ -174,26 +202,49 @@
     $('go').hidden = true;
   }
 
-  // List, grouped by tens once there are more than ten volumes
-  function render(filter) {
-    const shown = info.filter(v => filter === 'all' || (filter === 'done') === v.done);
-    const list = $('list');
+  // Only ten volumes are shown at a time; range tabs pick which ten.
+  const rangeOf = n => Math.floor((n - 1) / 10) * 10 + 1;
+  const RANGE_KEY = 'listening-index-range';
+  const starts = [...new Set(info.map(v => rangeOf(v.number)))];
+  const view = { filter: 'all', range: rangeOf((next || info[info.length - 1] || { number: 1 }).number) };
+  const savedRange = Number(read(RANGE_KEY));
+  if (starts.includes(savedRange)) view.range = savedRange;
+  $('ranges').hidden = starts.length < 2;
+
+  function renderRanges() {
+    const box = $('ranges');
+    box.replaceChildren();
+    for (const start of starts) {
+      const items = info.filter(v => rangeOf(v.number) === start);
+      const doneHere = items.filter(v => v.done).length;
+      const b = document.createElement('button');
+      b.className = 'range' + (doneHere === items.length ? ' full' : '');
+      b.setAttribute('role', 'tab');
+      b.setAttribute('aria-selected', String(start === view.range));
+      b.innerHTML = '<span></span><small></small>';
+      b.firstChild.textContent = `${start}～${items[items.length - 1].number}`;
+      b.lastChild.textContent = doneHere === items.length ? '✓ 全部練完' : `練了 ${doneHere}/${items.length}`;
+      b.addEventListener('click', () => { view.range = start; write(RANGE_KEY, String(start)); render(); });
+      box.appendChild(b);
+    }
+    box.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: 'nearest', inline: 'center' });
+  }
+
+  function render() {
+    renderRanges();
+    const filter = view.filter;
+    const inRange = starts.length < 2 ? info : info.filter(v => rangeOf(v.number) === view.range);
+    const shown = inRange.filter(v => filter === 'all' || (filter === 'done') === v.done);
+    const list = $('cards');
     list.replaceChildren();
     if (!shown.length) {
       const p = document.createElement('p'); p.className = 'empty';
-      p.textContent = filter === 'done' ? '還沒有練過的回次，先從第一回開始吧！' : '全部都練過了，太厲害了！🎉';
+      p.textContent = filter === 'done' ? '這一段還沒有練過的回次，先挑一回開始吧！' : '這一段全部都練過了，太厲害了！🎉';
       list.appendChild(p); return;
     }
-    const groups = new Map();
-    for (const v of shown) {
-      const start = Math.floor((v.number - 1) / 10) * 10 + 1;
-      if (!groups.has(start)) groups.set(start, []);
-      groups.get(start).push(v);
-    }
-    for (const [start, items] of groups) {
-      if (info.length > 10) { const h = document.createElement('h2'); h.textContent = `第 ${start}～${start + 9} 回`; list.appendChild(h); }
+    {
       const grid = document.createElement('div'); grid.className = 'grid';
-      for (const v of items) {
+      for (const v of shown) {
         const a = document.createElement('a');
         a.href = `${v.id}.html`;
         a.className = 'vol' + (v.done ? ' done' : '') + (next && v.id === next.id ? ' next' : '');
@@ -214,9 +265,16 @@
     }
   }
   const chips = [...document.querySelectorAll('.chip')];
-  const setFilter = f => { chips.forEach(c => c.setAttribute('aria-pressed', String(c.dataset.filter === f))); write(FILTER_KEY, f); render(f); };
+  const setFilter = f => { view.filter = f; chips.forEach(c => c.setAttribute('aria-pressed', String(c.dataset.filter === f))); write(FILTER_KEY, f); render(); };
   chips.forEach(c => c.addEventListener('click', () => setFilter(c.dataset.filter)));
   setFilter(['all', 'todo', 'done'].includes(read(FILTER_KEY)) ? read(FILTER_KEY) : 'all');
+  $('jump').addEventListener('submit', e => {
+    e.preventDefault();
+    const v = info.find(x => x.number === Number($('jumpNo').value));
+    if (v) location.href = `${v.id}.html`;
+    else { $('jumpNo').value = ''; $('jumpNo').placeholder = `1～${info.length}`; }
+  });
+  $('jumpNo').max = info.length;
 
   // Export
   $('download').addEventListener('click', () => {
@@ -226,15 +284,31 @@
     a.href = url; a.download = `英聽作答紀錄_${(read(NAME_KEY) || '未署名')}_${new Date().toISOString().slice(0, 10)}.json`; a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   });
-  $('copy').addEventListener('click', async () => {
-    const lines = [`英聽練習成績摘要｜${read(NAME_KEY) || '未署名'}｜${new Date().toLocaleDateString('zh-TW')}`];
+  const modeName = m => m === 'exam' ? '會考模式' : '磨耳朵模式';
+  const wrongOf = r => r.answers.filter(a => !a.correct).map(a => 'Q' + Number(a.id.slice(-2)));
+  async function copyLines(lines) {
+    try { await navigator.clipboard.writeText(lines.join('\n')); $('note').textContent = '已複製，可以貼到 LINE 給老師。'; }
+    catch { $('note').textContent = lines.join(' ／ '); }
+  }
+  // Daily report: only what was finished today, so a LINE message stays one or two lines.
+  $('copyToday').addEventListener('click', () => {
+    const today = new Date().toDateString();
+    const lines = [`🎧 ${read(NAME_KEY) || '未署名'}｜${new Date().toLocaleDateString('zh-TW')} 英聽練習`];
+    for (const v of info) for (const r of v.list.filter(x => new Date(x.finishedAt).toDateString() === today)) {
+      const wrong = wrongOf(r);
+      lines.push(`第${v.number}回 ${r.correct}/${r.total}（${modeName(r.mode)}）${wrong.length ? '錯：' + wrong.join('、') : '全對💯'}`);
+    }
+    if (lines.length === 1) lines.push('今天還沒有完成的回次。');
+    copyLines(lines);
+  });
+  $('copy').addEventListener('click', () => {
+    const lines = [`英聽練習成績總表｜${read(NAME_KEY) || '未署名'}｜${new Date().toLocaleDateString('zh-TW')}`];
     for (const v of info.filter(x => x.done)) {
       const r = v.last;
-      lines.push(`第${v.number}回：${new Date(r.finishedAt).toLocaleDateString('zh-TW')} 首次答對 ${r.correct}/${r.total}（${r.mode === 'exam' ? '會考模式' : '磨耳朵模式'}，共練 ${v.list.length} 次）`);
+      lines.push(`第${v.number}回 ${day(r.finishedAt)} ${r.correct}/${r.total}（練 ${v.list.length} 次）`);
     }
     if (lines.length === 1) lines.push('還沒有完成的回次。');
-    try { await navigator.clipboard.writeText(lines.join('\n')); $('note').textContent = '已複製，可以貼到 LINE 或 Email 給老師。'; }
-    catch { $('note').textContent = lines.join(' ／ '); }
+    copyLines(lines);
   });
 </script>
 </body>

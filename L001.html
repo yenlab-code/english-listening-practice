@@ -200,7 +200,8 @@
       <button id="retryWrong" class="primary">只重練錯題</button>
       <button id="restart">整回重來</button>
       <button id="export">下載作答紀錄</button>
-      <button id="copyPrompt">複製給 Claude 的檢討提示</button>
+      <button id="copyTeacher">📋 複製成績（傳給老師）</button>
+      <button id="copyPrompt">🤖 複製 AI 家教檢討提示（貼到 Claude）</button>
     </div>
     <p class="muted" id="copyNote"></p>
     <details><summary>檢討提示內容</summary><textarea id="prompt" readonly></textarea></details>
@@ -214,6 +215,7 @@
     const BANK = JSON.parse(document.getElementById('bank-data').textContent);
     const AUDIO_BASE = "audio/L001/";
     const HOME = "./";
+    const REPORT_URL = null;  // teacher's Google Apps Script endpoint; null = reporting off
     const P = BANK.pauses;
     const $ = id => document.getElementById(id);
     const answerButtons = [...document.querySelectorAll('[data-answer]')];
@@ -303,6 +305,39 @@
     }
     if (HOME) { $('home').href = HOME; $('home').hidden = false; }
     showPast();
+
+    // Optional reporting to the teacher's Google Sheet. Unsent reports wait in an outbox and retry on the next visit.
+    const OUTBOX_KEY = 'listening-outbox', DEVICE_KEY = 'listening-device-id';
+    function deviceId() {
+      let id = readStore(DEVICE_KEY);
+      if (!id) { id = Math.random().toString(36).slice(2, 10); try { localStorage.setItem(DEVICE_KEY, id); } catch {} }
+      return id;
+    }
+    const loadOutbox = () => { try { return JSON.parse(readStore(OUTBOX_KEY)) || []; } catch { return []; } };
+    const saveOutbox = list => { try { localStorage.setItem(OUTBOX_KEY, JSON.stringify(list)); } catch {} };
+    async function flushOutbox() {
+      if (!REPORT_URL) return true;
+      const pending = loadOutbox();
+      const left = [];
+      for (const item of pending) {
+        try { await fetch(REPORT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(item) }); }
+        catch { left.push(item); }
+      }
+      saveOutbox(left);
+      return left.length === 0;
+    }
+    async function report() {
+      if (!REPORT_URL) return null;
+      const first = session.answers;
+      saveOutbox([...loadOutbox(), {
+        student: readStore(NAME_KEY) || '未署名', device: deviceId(), volume: BANK.volume, number: BANK.number,
+        finishedAt: session.finishedAt, mode: modeName(session.listenMode), correct: first.filter(a => a.correct).length, total: first.length,
+        wrong: first.filter(a => !a.correct).map(a => 'Q' + Number(a.id.slice(-2))).join('、'),
+        replays: first.reduce((s, a) => s + a.replays, 0),
+      }]);
+      return flushOutbox();
+    }
+    flushOutbox();
 
     const current = () => BANK.questions[order[cursor]];
     const status = text => { $('status').textContent = text; };
@@ -536,12 +571,16 @@
         : right >= 12 ? '做得不錯！看看下面的錯題，再練一次會更好。'
         : '辛苦了！先把錯題重練一遍，小熊陪你慢慢來 🐻';
       setMood(right >= 12 ? 'happy' : 'idle');
-      if (!session.finishedAt) session.finishedAt = new Date().toISOString();
+      const firstFinish = !session.finishedAt;
+      if (firstFinish) session.finishedAt = new Date().toISOString();
       const name = readStore(NAME_KEY);
       $('saved').textContent = saveRecord()
         ? `📅 完成時間：${when(session.finishedAt)}${name ? `（${name}）` : ''}。紀錄已存在這台裝置${HOME ? '，回到目錄就看得到' : ''}。`
         : `📅 完成時間：${when(session.finishedAt)}。這個瀏覽器不允許儲存紀錄（例如無痕模式），請按「下載作答紀錄」保存。`;
       showPast();
+      if (firstFinish && REPORT_URL) report().then(ok => {
+        $('saved').textContent += ok ? ' 📨 成績已自動傳給老師。' : ' 📨 成績暫時傳不出去，下次打開網站會自動補傳。';
+      });
 
       const groups = new Map();
       for (const a of first) {
@@ -591,23 +630,21 @@
       const first = session.answers;
       const wrong = first.filter(a => !a.correct);
       const lines = [
-        `我剛完成國中會考英聽模擬第${BANK.number}回（${BANK.volume}，${BANK.version}，${session.listenMode === 'exam' ? '會考模式：選項用看的' : '磨耳朵模式：選項用聽的'}），首次作答 ${first.length} 題答對 ${first.length - wrong.length} 題。`,
-        '請擔任我的英聽家教，用繁體中文（必要時搭配英文）幫我檢討：',
-        '1. 先找出我錯題的共同錯誤模式（例如只抓到關鍵字、沒注意計畫改變、誤解說話者語氣）。',
-        '2. 一次只討論一題：先問我當時聽到什麼、為什麼選那個答案，等我回答後再講解。',
-        '3. 最後針對我的弱點出 3 題類似的聽力題（只給題目與選項，我作答後再公布答案與理由）。',
-        '以下題目資料來自固定題庫，請不要更改原文與選項。',
+        `你是我的國中會考英聽家教。我剛做完第${BANK.number}回（${session.listenMode === 'exam' ? '會考模式' : '磨耳朵模式'}），${first.length} 題答對 ${first.length - wrong.length} 題。請用繁體中文陪我檢討錯題：`,
+        '1. 一次只講一題：先問我當時聽到什麼、為什麼這樣選，等我回答再解釋。',
+        '2. 最後告訴我錯題的共同原因，並出 3 題類似的題目給我練習（我作答後再公布答案）。',
+        '下面的原文與選項來自題庫，請照原樣使用，不要改寫。',
         '',
       ];
       if (!wrong.length) lines.push('這回全對。請改為挑 3 題難度較高的題目，考我能不能說出答題關鍵句，再出 3 題進階類似題。', '');
       for (const a of wrong) {
         const q = BANK.questions.find(x => x.id === a.id);
-        lines.push(`【${q.id}｜${q.type}｜考點：${q.point}｜出處：${q.unit}】`);
+        lines.push(`【第 ${Number(q.id.slice(-2))} 題｜${q.type}｜${q.point}】`);
         lines.push('原文：' + q.passage.map(l => (l.speaker ? l.speaker + ': ' : '') + l.text).join(' / '));
         if (q.question) lines.push('問題：' + q.question.text);
         lines.push('選項：' + ['A', 'B', 'C'].map(k => `${k}. ${q.options[k].text}`).join('  '));
-        lines.push(`我的答案：${a.picked}；正解：${q.answer}；本題重聽 ${a.replays} 次`);
-        lines.push(`教師端說明：${q.evidence} ${q.wrong[a.picked].text}`);
+        lines.push(`我選 ${a.picked}，正解是 ${q.answer}。`);
+        lines.push(`解析：${q.evidence} ${q.wrong[a.picked].text}`);
         lines.push('');
       }
       const weak = [...new Set(wrong.map(a => a.point))];
@@ -616,6 +653,10 @@
     }
 
     function begin(newOrder, newMode) {
+      if (REPORT_URL && newMode === 'first' && !readStore(NAME_KEY)) {
+        const name = (prompt('請輸入你的名字或座號（成績會自動傳給老師）') || '').trim().slice(0, 20);
+        if (name) try { localStorage.setItem(NAME_KEY, name); } catch {}
+      }
       order = newOrder; cursor = 0; mode = newMode;
       listenMode = $('mode').value;
       if (newMode === 'first') session = { volume: BANK.volume, version: BANK.version, sourceSha256: BANK.sourceSha256, listenMode,
@@ -677,6 +718,15 @@
       const a = document.createElement('a');
       a.href = url; a.download = `${BANK.volume}_作答紀錄_${new Date().toISOString().slice(0, 10)}.json`; a.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
+    });
+    $('copyTeacher').addEventListener('click', async () => {
+      const first = session.answers;
+      const wrong = first.filter(a => !a.correct).map(a => 'Q' + Number(a.id.slice(-2)));
+      const lines = [`🎧 ${readStore(NAME_KEY) || '未署名'}｜${when(session.finishedAt)}`,
+        `第${BANK.number}回 ${first.length - wrong.length}/${first.length}（${modeName(session.listenMode)}）${wrong.length ? '錯：' + wrong.join('、') : '全對💯'}`];
+      if (session.retry.length) lines.push(`錯題重練 ${session.retry.filter(a => a.correct).length}/${session.retry.length}`);
+      try { await navigator.clipboard.writeText(lines.join('\n')); $('copyNote').textContent = '已複製，貼到 LINE 傳給老師就好。'; }
+      catch { $('copyNote').textContent = lines.join(' ／ '); }
     });
     $('copyPrompt').addEventListener('click', async () => {
       const text = $('prompt').value;
