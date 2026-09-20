@@ -578,9 +578,9 @@
         ? `📅 完成時間：${when(session.finishedAt)}${name ? `（${name}）` : ''}。紀錄已存在這台裝置${HOME ? '，回到目錄就看得到' : ''}。`
         : `📅 完成時間：${when(session.finishedAt)}。這個瀏覽器不允許儲存紀錄（例如無痕模式），請按「下載作答紀錄」保存。`;
       showPast();
-      if (firstFinish && REPORT_URL) report().then(ok => {
-        $('saved').textContent += ok ? ' 📨 成績已自動傳給老師。' : ' 📨 成績暫時傳不出去，下次打開網站會自動補傳。';
-      });
+      // The record still goes to the teacher's sheet, but the student sees no notice about it:
+      // students are told to copy the summary themselves as their check-in.
+      if (firstFinish && REPORT_URL) report();
 
       const groups = new Map();
       for (const a of first) {
