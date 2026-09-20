@@ -84,6 +84,9 @@
       color: var(--ink); text-decoration: none; font-weight: 700; font-size: .92rem; }
     .home:hover { border-color: var(--peach); }
     .past { background: #eefaf4; border: 2px solid var(--mint); border-radius: 16px; padding: 8px 14px; color: #2c7a5b; margin: 8px 0 0; }
+    .namerow { margin-top: 10px; gap: 8px; }
+    .namerow input { font: inherit; border: 2px solid var(--line); border-radius: 999px; padding: 6px 14px; background: #fffdf9; color: var(--ink); max-width: 16em; }
+    .namerow input:focus { outline: none; border-color: var(--peach); }
     .scorebig { display: flex; align-items: center; gap: 16px; }
     .scorebig .bear { width: 96px; height: 96px; }
     .scorebig b { font-size: 2.6rem; line-height: 1; }
@@ -140,6 +143,7 @@
       <h1 id="title"></h1>
       <p class="muted" id="intro" style="margin:0"></p>
       <p class="past" id="past" hidden></p>
+      <label class="namerow" id="nameRow" hidden>我的名字或座號 <input id="playerName" maxlength="20" placeholder="寫上名字，成績才認得出是你"></label>
     </div>
   </header>
 
@@ -197,12 +201,13 @@
     <h3>錯題與建議複習</h3>
     <div id="wrongList"></div>
     <div class="row" style="margin-top:16px">
-      <button id="retryWrong" class="primary">只重練錯題</button>
+      <button id="copyTeacher" class="primary">📋 複製成績（傳給老師）</button>
+      <button id="retryWrong">只重練錯題</button>
       <button id="restart">整回重來</button>
       <button id="export">下載作答紀錄</button>
-      <button id="copyTeacher">📋 複製成績（傳給老師）</button>
       <button id="copyPrompt">🤖 複製 AI 家教檢討提示（貼到 ChatGPT）</button>
     </div>
+    <p class="past" style="margin-top:14px">📋 做完這一回，記得按上面的「複製成績（傳給老師）」，把成績貼給老師當作打卡。</p>
     <p class="muted" id="copyNote"></p>
     <details><summary>檢討提示內容</summary><textarea id="prompt" readonly></textarea></details>
     <h3>這一回的歷次紀錄（存在這台裝置）</h3>
@@ -304,6 +309,10 @@
       }
     }
     if (HOME) { $('home').href = HOME; $('home').hidden = false; }
+    $('playerName').value = readStore(NAME_KEY) || '';
+    $('playerName').addEventListener('input', () => {
+      try { localStorage.setItem(NAME_KEY, $('playerName').value.trim().slice(0, 20)); } catch {}
+    });
     showPast();
 
     // Optional reporting to the teacher's Google Sheet. Unsent reports wait in an outbox and retry on the next visit.
@@ -653,10 +662,8 @@
     }
 
     function begin(newOrder, newMode) {
-      if (REPORT_URL && newMode === 'first' && !readStore(NAME_KEY)) {
-        const name = (prompt('請輸入你的名字或座號（成績會自動傳給老師）') || '').trim().slice(0, 20);
-        if (name) try { localStorage.setItem(NAME_KEY, name); } catch {}
-      }
+      // An inline field, not prompt(): a blocked pop-up must never stop the quiz from starting.
+      if (REPORT_URL && newMode === 'first' && !readStore(NAME_KEY)) $('nameRow').hidden = false;
       order = newOrder; cursor = 0; mode = newMode;
       listenMode = $('mode').value;
       if (newMode === 'first') session = { volume: BANK.volume, version: BANK.version, sourceSha256: BANK.sourceSha256, listenMode,
