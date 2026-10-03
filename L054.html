@@ -1,0 +1,745 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>英聽 MP3 練習</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #fff8ef; --ink: #4a3b36; --muted: #8a766d; --line: #f1e3d3; --panel: #ffffff;
+      --peach: #ffb4a2; --peach-deep: #f08a74; --mint: #bfe6d6; --mint-deep: #3f9d78; --sky: #cfe6ff; --sky-deep: #5b8fd6;
+      --butter: #ffe7a3; --lilac: #7a8cff; --good: #3f9d78; --bad: #e0724f; --key: #fff0b3; --accent: #f08a74;
+      font-family: "Arial Rounded MT Bold", system-ui, "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { max-width: 860px; margin: 0 auto; padding: 18px 16px 64px; background: var(--bg); color: var(--ink);
+      background-image: radial-gradient(#ffe2cf 1.2px, transparent 1.2px); background-size: 22px 22px; }
+    h1 { margin: 2px 0 6px; font-size: clamp(1.4rem, 4.5vw, 2rem); }
+    h2 { margin: 0; font-size: 1.35rem; }
+    h3 { margin: 22px 0 10px; font-size: 1.02rem; }
+    p { line-height: 1.7; }
+    .muted { color: var(--muted); }
+    .panel { background: var(--panel); border: 3px solid var(--line); border-radius: 26px; padding: 18px 20px; box-shadow: 0 7px 0 #f6e6d6; margin: 18px 0; }
+    .hero { display: flex; gap: 14px; align-items: center; }
+    .hero .bear { width: 92px; height: 92px; }
+    .hero .text { flex: 1; min-width: 0; }
+    .badge { display: inline-block; padding: 3px 12px; border-radius: 999px; background: var(--butter); font-weight: 700; font-size: .85rem; }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    button { font: inherit; font-weight: 700; cursor: pointer; border-radius: 999px; padding: 9px 16px; border: 2px solid var(--line);
+      background: #fffdf9; color: var(--ink); transition: transform .1s, box-shadow .1s, border-color .1s; }
+    button:hover:enabled { border-color: var(--peach); }
+    button:active:enabled { transform: translateY(2px); }
+    button:disabled { opacity: .45; cursor: not-allowed; }
+    button.primary { background: var(--peach-deep); border-color: var(--peach-deep); color: #fff; box-shadow: 0 4px 0 #d46e59; }
+    button.primary:hover:enabled { border-color: var(--peach-deep); }
+    button.primary:active:enabled { box-shadow: 0 1px 0 #d46e59; transform: translateY(3px); }
+    select, input { font: inherit; }
+    select { border: 2px solid var(--line); border-radius: 999px; padding: 6px 10px; background: #fffdf9; color: var(--ink); }
+    label { display: inline-flex; align-items: center; gap: 6px; font-size: .95rem; color: var(--muted); }
+    .qhead { display: flex; align-items: center; gap: 12px; }
+    .qhead .bear { width: 64px; height: 64px; }
+    .dots { display: flex; flex-wrap: wrap; gap: 5px; margin: 4px 0 2px; }
+    .dots i { width: 14px; height: 14px; border-radius: 50%; background: #f3e7da; display: block; }
+    .dots i.right { background: var(--mint-deep); }
+    .dots i.wrong { background: var(--bad); }
+    .dots i.now { background: var(--butter); box-shadow: 0 0 0 3px #f5c95c inset; }
+    .answers { display: flex; gap: 14px; margin: 18px 0; }
+    .answers button { min-width: 92px; min-height: 76px; font-size: 1.9rem; font-weight: 800; border-radius: 24px; border-width: 3px; }
+    .answers button[data-answer="A"] { background: #fff0ec; border-color: var(--peach); box-shadow: 0 5px 0 #f3c3b6; }
+    .answers button[data-answer="B"] { background: #eefaf4; border-color: var(--mint); box-shadow: 0 5px 0 #b3dcca; }
+    .answers button[data-answer="C"] { background: #eef5ff; border-color: var(--sky); box-shadow: 0 5px 0 #b6d3f3; }
+    .answers button:active:enabled { transform: translateY(4px); box-shadow: none; }
+    .answers button.chosen { outline: 4px solid var(--ink); outline-offset: 2px; }
+    .status { font-weight: 700; min-height: 1.7em; margin: 10px 0 0; }
+    .feedback { border: 3px solid var(--mint); background: #f1fbf6; padding: 12px 16px; border-radius: 20px; margin-top: 14px; }
+    .feedback.wrong { border-color: var(--peach); background: #fff4f0; }
+    .feedback p { margin: 6px 0; }
+    .feedback .tag { font-weight: 800; }
+    .transcript { margin-top: 16px; }
+    .transcript p { margin: 5px 0; padding: 5px 8px; border-radius: 12px; }
+    .transcript p.key { background: var(--key); }
+    .transcript .spk { color: var(--muted); font-size: .88rem; margin-right: 6px; }
+    .transcript .line { display: flex; gap: 8px; align-items: flex-start; }
+    .transcript .line > div { flex: 1; }
+    .transcript .zh { display: block; color: var(--muted); font-size: .92rem; margin-top: 2px; }
+    .transcript.hide-zh .zh { display: none; }
+    .transcript .opt.correct .en { color: var(--good); font-weight: 800; }
+    .transcript .opt.picked .en { text-decoration: line-through; color: var(--bad); }
+    .say { padding: 2px 9px; font-size: .95rem; line-height: 1.4; flex: none; }
+    .transcript .head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .transcript h3 { margin: 0; }
+    .booklet { border: 3px dashed var(--line); border-radius: 18px; padding: 8px 16px; margin: 12px 0 0; font-size: 1.12rem; background: #fffdf9; }
+    .booklet p { margin: 7px 0; }
+    .report { font-size: .88rem; margin-top: 16px; }
+    table { border-collapse: collapse; width: 100%; font-size: .95rem; }
+    th, td { text-align: left; padding: 8px; border-bottom: 2px dotted var(--line); vertical-align: top; }
+    th { color: var(--muted); font-size: .88rem; }
+    .bar { height: 10px; background: #f3e7da; border-radius: 999px; overflow: hidden; min-width: 80px; }
+    .bar > span { display: block; height: 100%; background: var(--good); border-radius: 999px; }
+    .error { background: #fff0ec; border: 2px solid var(--peach); padding: 10px 14px; border-radius: 14px; }
+    textarea { width: 100%; min-height: 160px; font: inherit; font-size: .9rem; border: 2px solid var(--line); border-radius: 14px; padding: 10px; }
+    details summary { cursor: pointer; color: var(--muted); margin-top: 10px; }
+    .home { display: inline-block; margin: 0 0 10px; padding: 6px 14px; border-radius: 999px; background: #fff; border: 2px solid var(--line);
+      color: var(--ink); text-decoration: none; font-weight: 700; font-size: .92rem; }
+    .home:hover { border-color: var(--peach); }
+    .past { background: #eefaf4; border: 2px solid var(--mint); border-radius: 16px; padding: 8px 14px; color: #2c7a5b; margin: 8px 0 0; }
+    .namerow { margin-top: 10px; gap: 8px; }
+    .namerow input { font: inherit; border: 2px solid var(--line); border-radius: 999px; padding: 6px 14px; background: #fffdf9; color: var(--ink); max-width: 16em; }
+    .namerow input:focus { outline: none; border-color: var(--peach); }
+    .scorebig { display: flex; align-items: center; gap: 16px; }
+    .scorebig .bear { width: 96px; height: 96px; }
+    .scorebig b { font-size: 2.6rem; line-height: 1; }
+    .scorebig .stars { font-size: 1.6rem; letter-spacing: 2px; }
+    /* bear moods */
+    .bear .eyes-happy, .bear .mouth-happy, .bear .mouth-oops, .bear .drop, .bear .sparkle, .bear .notes { display: none; }
+    .bear[data-mood="happy"] .eyes-normal, .bear[data-mood="happy"] .mouth-normal,
+    .bear[data-mood="oops"] .mouth-normal { display: none; }
+    .bear[data-mood="happy"] .eyes-happy, .bear[data-mood="happy"] .mouth-happy, .bear[data-mood="happy"] .sparkle,
+    .bear[data-mood="oops"] .mouth-oops, .bear[data-mood="oops"] .drop, .bear[data-mood="listening"] .notes { display: inline; }
+    .bear { flex: none; animation: bob 2.6s ease-in-out infinite; }
+    .bear[data-mood="happy"] { animation: hop .6s ease-in-out 2; }
+    .bear .notes text { animation: float 1.6s ease-in-out infinite; }
+    .bear .notes text:nth-child(2) { animation-delay: .5s; }
+    @keyframes bob { 50% { transform: translateY(-4px) rotate(-2deg); } }
+    @keyframes hop { 50% { transform: translateY(-10px) rotate(4deg); } }
+    @keyframes float { 0% { opacity: 0; transform: translateY(6px); } 40% { opacity: 1; } 100% { opacity: 0; transform: translateY(-8px); } }
+    @media (prefers-reduced-motion: reduce) { .bear, .bear .notes text { animation: none !important; } }
+    @media (max-width: 520px) {
+      .answers button { min-width: 0; flex: 1; }
+      .hero .bear { width: 72px; height: 72px; }
+      .panel { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <template id="bearArt">
+    <svg class="bear" viewBox="0 0 120 120" aria-hidden="true" data-mood="idle">
+      <g class="notes"><text x="96" y="24" font-size="17" fill="#f08a74">♪</text><text x="4" y="32" font-size="14" fill="#7a8cff">♫</text></g>
+      <g class="sparkle"><text x="94" y="26" font-size="18">✨</text><text x="2" y="34" font-size="14">⭐</text></g>
+      <circle cx="32" cy="36" r="13" fill="#d6a57c"/><circle cx="32" cy="36" r="7" fill="#f6d2b4"/>
+      <circle cx="88" cy="36" r="13" fill="#d6a57c"/><circle cx="88" cy="36" r="7" fill="#f6d2b4"/>
+      <circle cx="60" cy="66" r="40" fill="#e0b088"/>
+      <path d="M22 62 C22 14, 98 14, 98 62" fill="none" stroke="#7a8cff" stroke-width="7" stroke-linecap="round"/>
+      <rect x="11" y="52" width="17" height="28" rx="8" fill="#7a8cff"/><rect x="92" y="52" width="17" height="28" rx="8" fill="#7a8cff"/>
+      <ellipse cx="60" cy="81" rx="18" ry="13" fill="#f8e0c8"/>
+      <ellipse cx="60" cy="75" rx="5.5" ry="4" fill="#4a3b36"/>
+      <path class="mouth-normal" d="M54 84 Q60 90 66 84" fill="none" stroke="#4a3b36" stroke-width="2.4" stroke-linecap="round"/>
+      <path class="mouth-happy" d="M52 82 Q60 96 68 82 Z" fill="#c9555a" stroke="#4a3b36" stroke-width="2" stroke-linejoin="round"/>
+      <ellipse class="mouth-oops" cx="60" cy="86" rx="3.4" ry="4" fill="#4a3b36"/>
+      <g class="eyes-normal"><circle cx="45" cy="62" r="5" fill="#4a3b36"/><circle cx="46.6" cy="60.4" r="1.6" fill="#fff"/>
+        <circle cx="75" cy="62" r="5" fill="#4a3b36"/><circle cx="76.6" cy="60.4" r="1.6" fill="#fff"/></g>
+      <g class="eyes-happy" fill="none" stroke="#4a3b36" stroke-width="3" stroke-linecap="round"><path d="M40 63 Q45 56 50 63"/><path d="M70 63 Q75 56 80 63"/></g>
+      <path class="drop" d="M88 42 Q93 50 88 54 Q83 50 88 42 Z" fill="#9fd3ff" stroke="#5b8fd6" stroke-width="1.2"/>
+      <ellipse cx="37" cy="76" rx="6" ry="3.6" fill="#ff9eaa" opacity=".75"/><ellipse cx="83" cy="76" rx="6" ry="3.6" fill="#ff9eaa" opacity=".75"/>
+    </svg>
+  </template>
+
+  <a id="home" class="home" hidden>🏠 回到目錄</a>
+  <header class="panel hero">
+    <span class="bear-slot"></span>
+    <div class="text">
+      <span class="badge" id="badge"></span>
+      <h1 id="title"></h1>
+      <p class="muted" id="intro" style="margin:0"></p>
+      <p class="past" id="past" hidden></p>
+      <label class="namerow" id="nameRow" hidden>我的名字或座號 <input id="playerName" maxlength="20" placeholder="寫上名字，成績才認得出是你"></label>
+    </div>
+  </header>
+
+  <div class="panel row">
+    <label>模式 <select id="mode"><option value="exam" selected>會考模式（選項用看的）</option><option value="ear">磨耳朵模式（選項用聽的）</option></select></label>
+    <button id="start" class="primary">開始</button>
+    <button id="replay" disabled>重聽本題</button>
+    <button id="pause" disabled>暫停</button>
+    <label>速度 <select id="rate"><option value="0.8">0.8×</option><option value="0.9">0.9×</option><option value="1" selected>1.0×</option><option value="1.1">1.1×</option></select></label>
+    <label>講解 <select id="lang"><option value="both" selected>中文＋英文</option><option value="zh">只有中文</option><option value="en">只有英文</option></select></label>
+  </div>
+
+  <main id="stage" class="panel" hidden>
+    <div class="qhead">
+      <span class="bear-slot"></span>
+      <div>
+        <p class="muted" id="progress" style="margin:0"></p>
+        <h2 id="heading"></h2>
+        <div class="dots" id="dots" aria-hidden="true"></div>
+      </div>
+    </div>
+    <p class="status" id="status" aria-live="polite"></p>
+    <div class="booklet" id="booklet" hidden></div>
+    <div class="answers" role="group" aria-label="作答選項">
+      <button data-answer="A" disabled>A</button>
+      <button data-answer="B" disabled>B</button>
+      <button data-answer="C" disabled>C</button>
+    </div>
+    <div id="review" hidden>
+      <div id="feedback" class="feedback"></div>
+      <div class="row" style="margin-top:12px">
+        <button id="replayKey">重聽關鍵句</button>
+        <button id="replayPassage">重聽原文</button>
+        <button id="replayFeedback">再聽一次講解</button>
+        <button id="next" class="primary">下一題</button>
+      </div>
+      <div class="transcript" id="transcript"></div>
+      <p class="muted report">覺得這題有問題（例如答案不只一個、發音怪怪的）？記下題號 <b id="reportId"></b> 告訴老師。</p>
+    </div>
+  </main>
+
+  <section id="finished" class="panel" hidden>
+    <div class="scorebig">
+      <span class="bear-slot"></span>
+      <div>
+        <h2>成績單</h2>
+        <b id="scoreBig"></b> <span class="stars" id="stars"></span>
+        <p class="muted" id="cheer" style="margin:4px 0 0"></p>
+      </div>
+    </div>
+    <p id="score"></p>
+    <p class="muted" id="saved"></p>
+    <h3>各考點答對率</h3>
+    <table><thead><tr><th>題型／考點</th><th>答對</th><th></th></tr></thead><tbody id="byPoint"></tbody></table>
+    <h3>錯題與建議複習</h3>
+    <div id="wrongList"></div>
+    <div class="row" style="margin-top:16px">
+      <button id="copyTeacher" class="primary">📋 複製成績（傳給老師）</button>
+      <button id="retryWrong">只重練錯題</button>
+      <button id="restart">整回重來</button>
+      <button id="export">下載作答紀錄</button>
+      <button id="copyPrompt">🤖 複製 AI 家教檢討提示（貼到 ChatGPT）</button>
+    </div>
+    <p class="past" style="margin-top:14px">📋 做完這一回，記得按上面的「複製成績（傳給老師）」，把成績貼給老師當作打卡。</p>
+    <p class="muted" id="copyNote"></p>
+    <details><summary>檢討提示內容</summary><textarea id="prompt" readonly></textarea></details>
+    <h3>這一回的歷次紀錄（存在這台裝置）</h3>
+    <table><thead><tr><th>完成時間</th><th>模式</th><th>首次答對</th><th>錯題重練</th></tr></thead><tbody id="history"></tbody></table>
+  </section>
+
+  <script id="bank-data" type="application/json">{"volume":"L054","number":54,"version":"v1.0","status":"已完成","sourceSha256":"fb59fd614b230cdd9c3de8da061d5e705dc92c3000782fba7ab9f03db54c88fe","pauses":{"after_number":800,"between_lines":450,"between_repeats":1200,"after_passage":1500,"between_options":700,"after_letter":150,"preview_options":5000},"common":{"correct":"98477dd1fa15907cef80.mp3","wrong":"7c852d00c307d044d12c.mp3"},"questions":[{"id":"L054-Q01","type":"基本問答","point":"邀請／提議","unit":"U02｜核心單字「形容詞與數量用語」｜教材印刷頁 p.32｜核心編號98 free；U01｜核心單字「學校」｜教材印刷頁 p.8｜核心編號35 class；U02｜核心單字「地方名稱」｜教材印刷頁 p.30｜核心編號46 park、40 home；U02｜核心單字「時間、星期、月份與節日」｜教材印刷頁 pp.29～30｜核心編號14 Sunday、2 morning；U04｜核心單字「動詞」｜教材印刷頁 p.72｜核心編號52 want；U07｜核心單字「動詞」｜教材印刷頁 pp.135～136｜核心編號55 try；U09｜核心單字「連綴動詞與其他動詞」｜教材印刷頁 pp.183～203｜核心編號43 sound；U06｜核心單字｜教材印刷頁 pp.117～120｜核心編號32 fun；U08｜核心單字「動詞」｜教材印刷頁 p.153｜核心編號55 wear；U01｜核心單字「家人與親屬」｜教材印刷頁 p.7｜核心編號10 sister；U01｜核心單字「副詞與相關用字」｜教材印刷頁 p.11｜核心編號123 very","difficulty":"易","numberAudio":"e617836b71646c589d22.mp3","passage":[{"speaker":null,"text":"There's a free yoga class in the park on Sunday morning. Do you want to try it with me?","audio":"7d36d70990fa4ebdd04a.mp3","zh":"星期日早上公園有免費的瑜伽課。你想和我一起去試試看嗎？"}],"question":null,"options":{"A":{"text":"Oh, sounds fun. What should I wear?","letterAudio":"93138ad65b3704914636.mp3","audio":"dcf4978486ee19b7e4b2.mp3","zh":"噢，聽起來很好玩。我應該穿什麼？","letterEnd":0.537},"B":{"text":"The park is near my home.","letterAudio":"609555d8760f27caf21b.mp3","audio":"3579819ae12759625172.mp3","zh":"公園在我家附近。","letterEnd":0.588},"C":{"text":"My sister does yoga. She's very good at it.","letterAudio":"9756927a5f3791737934.mp3","audio":"e55c054ef73b65ef121f.mp3","zh":"我姊姊（妹妹）做瑜伽。她做得很好。","letterEnd":0.713}},"answer":"A","keyLines":[],"evidence":"對方說星期日早上公園有免費的瑜伽課，問自己要不要一起去試；A說聽起來很好玩，並問要穿什麼，是接受邀請的說法。","zhCorrect":"de2e6308a886b89d81cd.mp3","enText":"The answer is A. Oh, sounds fun. What should I wear? Someone invites you to try a free yoga class in the park on Sunday morning. The best reply is, Oh, sounds fun. What should I wear? This reply accepts the invitation.","enAudio":"6b7b8501f3916728dcc2.mp3","wrong":{"B":{"text":"B說公園離自己家很近，只接著 park，沒有回應邀請。","audio":"eb4bd9a756091579aad8.mp3"},"C":{"text":"C說自己的姊姊（妹妹）做瑜伽、做得很好，只接著 yoga，談家人，沒有回應邀請。","audio":"3b56bc3b0ffe080192b5.mp3"}}},{"id":"L054-Q02","type":"基本問答","point":"協助","unit":"U01｜核心單字「動詞」｜教材印刷頁 pp.9～10｜核心編號87 check、95 go；U01｜核心單字「其他名詞及相關用字」｜教材印刷頁 p.9｜核心編號61 door；U01｜核心單字「顏色」｜教材印刷頁 p.8｜核心編號54 green；U01｜核心單字「副詞與相關用字」｜教材印刷頁 p.11｜核心編號128 now；U03｜核心單字「形容詞」｜教材印刷頁 p.52｜核心編號66 tired","difficulty":"易","numberAudio":"3d8f0b4ea5d7a3765f2f.mp3","passage":[{"speaker":null,"text":"Could you check if the back door is locked? I'm already in bed.","audio":"19648dcc273974d58846.mp3","zh":"你可以去看看後門有沒有鎖上嗎？我已經躺在床上了。"}],"question":null,"options":{"A":{"text":"Our back door is green.","letterAudio":"93138ad65b3704914636.mp3","audio":"e421752defe5cd0aecb8.mp3","zh":"我們的後門是綠色的。","letterEnd":0.537},"B":{"text":"No problem. I'll go and check now.","letterAudio":"609555d8760f27caf21b.mp3","audio":"dd7c3687005379b525f3.mp3","zh":"沒問題。我現在就去看。","letterEnd":0.588},"C":{"text":"Well, I went to bed at ten. I was tired.","letterAudio":"9756927a5f3791737934.mp3","audio":"2bdab44a357e2399de0e.mp3","zh":"嗯，我十點就上床了。我很累。","letterEnd":0.713}},"answer":"B","keyLines":[],"evidence":"對方請自己去看看後門有沒有鎖上，說他已經躺在床上了；B說沒問題，現在就去看，是答應請求的說法。","zhCorrect":"a9107253bf4c6d9c8c8c.mp3","enText":"The answer is B. No problem. I'll go and check now. Someone asks you to check if the back door is locked. The best reply is, No problem. I'll go and check now. This reply agrees to help.","enAudio":"abec57bc69ff65f1f9d6.mp3","wrong":{"A":{"text":"A說家裡的後門是綠色的，只接著 back door，沒有回應請求。","audio":"726731f5afd6e9550f80.mp3"},"C":{"text":"C說自己十點上床、很累，只接著 bed，說的是自己的事，沒有回應請求。","audio":"97d8b4a2f67c105887c6.mp3"}}},{"id":"L054-Q03","type":"基本問答","point":"鼓勵／回應消息","unit":"U02｜核心單字「動詞」｜教材印刷頁 p.31｜核心編號80 study；U02｜核心單字「其他名詞及相關用字」｜教材印刷頁 p.31｜核心編號69 English、70 movie；U02｜核心單字「時間、星期、月份與節日」｜教材印刷頁 pp.29～30｜核心編號33 year、5 night；U08｜核心單字「形容詞、副詞、介系詞與代名詞」｜教材印刷頁 pp.153～154｜核心編號76 still、68 funny；U01｜核心單字「動詞」｜教材印刷頁 pp.9～10｜核心編號92 watch；U04｜核心單字「形容詞與其他用法」｜教材印刷頁 p.72｜核心編號60 last；U01｜核心單字「職業」｜教材印刷頁 p.7｜核心編號16 teacher","difficulty":"易","numberAudio":"88373118ad27e5f2cc40.mp3","passage":[{"speaker":null,"text":"I've studied English for a year, but I still can't understand English movies.","audio":"9a0d646ad9a67ce72456.mp3","zh":"我已經學英文一年了，可是我還是看不懂英文電影。"}],"question":null,"options":{"A":{"text":"Keep trying, and you'll get better.","letterAudio":"93138ad65b3704914636.mp3","audio":"46befa5bbc5531dad3f1.mp3","zh":"繼續努力，你就會進步。","letterEnd":0.537},"B":{"text":"Oh, I watched a movie last night. It was funny.","letterAudio":"609555d8760f27caf21b.mp3","audio":"511bd27021ffafaef7cb.mp3","zh":"噢，我昨天晚上看了一部電影。很好笑。","letterEnd":0.588},"C":{"text":"My English teacher is from Canada. She's nice.","letterAudio":"9756927a5f3791737934.mp3","audio":"4833c47a77d16744c3b6.mp3","zh":"我的英文老師來自加拿大。她人很好。","letterEnd":0.713}},"answer":"A","keyLines":[],"evidence":"對方說自己學英文一年了，還是看不懂英文電影；A說繼續努力，就會進步，是鼓勵的說法。","zhCorrect":"0c03cd4286646da9be66.mp3","enText":"The answer is A. Keep trying, and you'll get better. Someone has studied English for a year but still can't understand English movies. The best reply is, Keep trying, and you'll get better. This reply encourages the speaker.","enAudio":"13361d26c73f63e55aff.mp3","wrong":{"B":{"text":"B說自己昨晚看了一部電影、很好笑，只接著 movie，談自己，沒有回應對方。","audio":"a87e476ca0e5cbca2ace.mp3"},"C":{"text":"C說自己的英文老師來自加拿大、人很好，只接著 English，沒有回應對方。","audio":"0aee6c3db14469219cb0.mp3"}}},{"id":"L054-Q04","type":"基本問答","point":"資訊詢問","unit":"U04｜核心單字「其他名詞」｜教材印刷頁 pp.71～72｜核心編號36 sky；U09｜核心單字「連綴動詞與其他動詞」｜教材印刷頁 pp.183～203｜核心編號44 look；U01｜核心單字「形容詞」｜教材印刷頁 pp.10～11｜核心編號113 beautiful；U03｜核心單字「動詞」｜教材印刷頁 p.51｜核心編號45 like；U01｜核心單字「副詞與相關用字」｜教材印刷頁 p.11｜核心編號123 very；U01｜核心單字「顏色」｜教材印刷頁 p.8｜核心編號50 blue；U02｜核心單字「時間、星期、月份與節日」｜教材印刷頁 pp.29～30｜核心編號17 today；U05｜主單字表「場所與自然環境」｜教材印刷頁 p.88｜核心編號18 beach；U01｜核心單字「家人與親屬」｜教材印刷頁 p.7｜核心編號8 grandmother / grandma；U02｜核心單字「地方名稱」｜教材印刷頁 p.30｜核心編號39 house","difficulty":"易","numberAudio":"6b96c948428910ab2482.mp3","passage":[{"speaker":null,"text":"Where did you take this photo? The sky looks beautiful.","audio":"b73119749b488e78d6ee.mp3","zh":"你這張照片是在哪裡拍的？天空看起來好美。"}],"question":null,"options":{"A":{"text":"Oh, I like taking photos.","letterAudio":"93138ad65b3704914636.mp3","audio":"40d146b61b1228063289.mp3","zh":"噢，我喜歡拍照。","letterEnd":0.537},"B":{"text":"The sky is very blue today.","letterAudio":"609555d8760f27caf21b.mp3","audio":"89fd2355b09ab4d6b0e2.mp3","zh":"今天的天空很藍。","letterEnd":0.588},"C":{"text":"Oh, at the beach near my grandma's house.","letterAudio":"9756927a5f3791737934.mp3","audio":"1aae8a0eadf64dd9455c.mp3","zh":"噢，在我奶奶（外婆）家附近的海灘。","letterEnd":0.713}},"answer":"C","keyLines":[],"evidence":"對方問這張照片是在哪裡拍的；C說是在奶奶（外婆）家附近的海灘，回答了拍照的地點。","zhCorrect":"83b35d8caed4c674ebc2.mp3","enText":"The answer is C. Oh, at the beach near my grandma's house. Someone asks where you took the photo. The best reply is, Oh, at the beach near my grandma's house. This reply tells the place.","enAudio":"35d4b2137b4185f37b5d.mp3","wrong":{"A":{"text":"A說自己喜歡拍照，只接著 photos，沒有說在哪裡拍的。","audio":"327449e2de47c028e8a2.mp3"},"B":{"text":"B說今天的天空很藍，只接著 sky，說的是今天的天氣，沒有說照片在哪裡拍的。","audio":"db6c0468093a886b6469.mp3"}}},{"id":"L054-Q05","type":"基本問答","point":"接受／拒絕","unit":"U02｜核心單字「動物」｜教材印刷頁 pp.30～31｜核心編號50 cat；U05｜主單字表「動詞」｜教材印刷頁 p.90｜核心編號46 take；U02｜核心單字「地方名稱」｜教材印刷頁 p.30｜核心編號40 home；U01｜核心單字「顏色」｜教材印刷頁 p.8｜核心編號51 white；U02｜核心單字「動詞」｜教材印刷頁 p.31｜核心編號92 sleep；U04｜核心單字「食物：可數」｜教材印刷頁 p.70｜核心編號7 drink；U04｜核心單字「食物：一般視為不可數」｜教材印刷頁 p.70｜核心編號12 milk；U01｜核心單字「副詞與相關用字」｜教材印刷頁 p.11｜核心編號124 too","difficulty":"中","numberAudio":"b75bc069020875a5ebc7.mp3","passage":[{"speaker":null,"text":"Our cat had five kittens. Would you like to take one home?","audio":"ccbac8a47c5e4cfdc247.mp3","zh":"我們家的貓生了五隻小貓。你想帶一隻回家嗎？"}],"question":null,"options":{"A":{"text":"My cat is white. She sleeps all day.","letterAudio":"93138ad65b3704914636.mp3","audio":"cab34c0602b29d5ff5d2.mp3","zh":"我的貓是白色的。她整天都在睡覺。","letterEnd":0.537},"B":{"text":"Kittens drink a lot of milk. They sleep a lot, too.","letterAudio":"609555d8760f27caf21b.mp3","audio":"f9059357d1edc1e7bfff.mp3","zh":"小貓喝很多牛奶。牠們也很會睡。","letterEnd":0.588},"C":{"text":"I'd love to, but my dad doesn't like cats.","letterAudio":"9756927a5f3791737934.mp3","audio":"f59eb02ee5fc0c7cecd8.mp3","zh":"我很想，可是我爸爸不喜歡貓。","letterEnd":0.713}},"answer":"C","keyLines":[],"evidence":"對方問自己要不要帶一隻小貓回家；C說很想要，但是爸爸不喜歡貓，是委婉拒絕的說法。","zhCorrect":"afae39775371a7d0fabb.mp3","enText":"The answer is C. I'd love to, but my dad doesn't like cats. Someone asks if you would like to take a kitten home. The best reply is, I'd love to, but my dad doesn't like cats. This reply says no in a polite way.","enAudio":"85d5dae55973b2b8d95c.mp3","wrong":{"A":{"text":"A說自己的貓是白色的、整天睡覺，只接著 cat，談自己的貓，沒有回答要不要帶小貓回家。","audio":"53764c0a0290340d6af4.mp3"},"B":{"text":"B說小貓喝很多牛奶、也很會睡，只接著 kittens，沒有回答要不要帶小貓回家。","audio":"b93a18746a75557049b2.mp3"}}},{"id":"L054-Q06","type":"基本問答","point":"感謝","unit":"U09｜核心單字「名詞：自然、生物與一般概念」｜教材印刷頁 pp.183～203｜核心編號36 answer、34 question；U06｜核心單字｜教材印刷頁 pp.117～120｜核心編號13 math、56 finish、12 subject；U04｜核心單字「形容詞與其他用法」｜教材印刷頁 p.72｜核心編號60 last；U02｜核心單字「時間、星期、月份與節日」｜教材印刷頁 pp.29～30｜核心編號5 night；U03｜核心單字「其他名詞」｜教材印刷頁 p.51｜核心編號33 homework；U01｜核心單字「形容詞」｜教材印刷頁 pp.10～11｜核心編號116 favorite；U03｜核心單字「動詞」｜教材印刷頁 p.51｜核心編號45 like；U01｜核心單字「學校」｜教材印刷頁 p.8｜核心編號44 number；U02｜核心單字「動詞」｜教材印刷頁 p.31｜核心編號88 help；U01｜核心單字「副詞與相關用字」｜教材印刷頁 p.11｜核心編號124 too","difficulty":"易","numberAudio":"b01412f85694bf7dd6b1.mp3","passage":[{"speaker":null,"text":"Thanks for answering my math questions last night. I finished all my homework.","audio":"38bd5c01a853683b020f.mp3","zh":"謝謝你昨天晚上回答我的數學問題。我把功課全部寫完了。"}],"question":null,"options":{"A":{"text":"Math is my favorite subject. I like numbers.","letterAudio":"93138ad65b3704914636.mp3","audio":"7e8c24d1a1b17d845b76.mp3","zh":"數學是我最喜歡的科目。我喜歡數字。","letterEnd":0.537},"B":{"text":"Any time. I'm glad I could help.","letterAudio":"609555d8760f27caf21b.mp3","audio":"b99a4469481472ff6220.mp3","zh":"隨時都可以。我很高興能幫上忙。","letterEnd":0.588},"C":{"text":"Oh, I did my homework at night, too.","letterAudio":"9756927a5f3791737934.mp3","audio":"09ec920ce2c18f9e5432.mp3","zh":"噢，我也是晚上寫功課。","letterEnd":0.713}},"answer":"B","keyLines":[],"evidence":"對方謝謝自己昨晚回答他的數學問題；B說隨時都可以，很高興能幫上忙，是回應道謝的說法。","zhCorrect":"57b70146abdb44efab8c.mp3","enText":"The answer is B. Any time. I'm glad I could help. Someone thanks you for answering math questions last night. The best reply is, Any time. I'm glad I could help. This reply answers the thanks.","enAudio":"e28b831013fbf6416295.mp3","wrong":{"A":{"text":"A說數學是自己最喜歡的科目、喜歡數字，只接著 math，沒有回應道謝。","audio":"612cbd2e9ba3363de2b4.mp3"},"C":{"text":"C說自己也是晚上寫功課，只接著 homework 和 night，沒有回應道謝。","audio":"6e4886b1b53b1d4ae9e8.mp3"}}},{"id":"L054-Q07","type":"基本問答","point":"非直接回應","unit":"U01｜核心單字「家人與親屬」｜教材印刷頁 p.7｜核心編號8 grandmother / grandma；U09｜核心單字「連綴動詞與其他動詞」｜教材印刷頁 pp.183～203｜核心編號47 feel；U01｜核心單字「副詞與相關用字」｜教材印刷頁 p.11｜核心編號128 now；U05｜主單字表「動詞」｜教材印刷頁 p.90｜核心編號42 live；U01｜核心單字「形容詞」｜教材印刷頁 pp.10～11｜核心編號102 fine；U01｜核心單字「動詞」｜教材印刷頁 pp.9～10｜核心編號78 thank；U02｜核心單字「動詞」｜教材印刷頁 p.31｜核心編號83 walk；U02｜核心單字「時間、星期、月份與節日」｜教材印刷頁 pp.29～30｜核心編號2 morning","difficulty":"中","numberAudio":"e0d26bc8f9a996557d6a.mp3","passage":[{"speaker":null,"text":"Is your grandma feeling better now?","audio":"6b78e33c1239e6263e21.mp3","zh":"你奶奶（外婆）現在有好一點嗎？"}],"question":null,"options":{"A":{"text":"My grandma lives with us.","letterAudio":"93138ad65b3704914636.mp3","audio":"58d8d5ce2295b1770686.mp3","zh":"我奶奶（外婆）和我們住在一起。","letterEnd":0.537},"B":{"text":"I feel fine, thank you.","letterAudio":"609555d8760f27caf21b.mp3","audio":"305527fcb65cc0ee8b93.mp3","zh":"我覺得很好，謝謝你。","letterEnd":0.588},"C":{"text":"She went for a long walk this morning.","letterAudio":"9756927a5f3791737934.mp3","audio":"93d10342363a582ad66c.mp3","zh":"她今天早上去散了很久的步。","letterEnd":0.713}},"answer":"C","keyLines":[],"evidence":"C沒有直接說 Yes，但說奶奶（外婆）今天早上去散了很久的步，可知她身體好多了。","zhCorrect":"86dff506609030cd2f1e.mp3","enText":"The answer is C. She went for a long walk this morning. Someone asks if your grandma is feeling better. The best reply is, She went for a long walk this morning. This means your grandma is feeling much better.","enAudio":"701dc9fdaf6fbc5ebe8a.mp3","wrong":{"A":{"text":"A只說奶奶（外婆）和自己家住在一起，沒有說她有沒有好一點。","audio":"7f3ba12feadfdaa9458a.mp3"},"B":{"text":"B說的是自己覺得很好，不是奶奶（外婆）的情況。","audio":"b918f03090e783994d84.mp3"}}},{"id":"L054-Q08","type":"基本問答","point":"提醒／安撫／道歉","unit":"U01｜核心單字「形容詞」｜教材印刷頁 pp.10～11｜核心編號119 careful、109 new；U04｜核心單字「容器與計量詞」｜教材印刷頁 p.71｜核心編號28 glass；U02｜核心單字「地方名稱」｜教材印刷頁 p.30｜核心編號42 kitchen；U07｜核心單字「其他名詞」｜教材印刷頁 pp.134～135｜核心編號20 floor；U08｜核心單字「服飾與配件」｜教材印刷頁 pp.151～152｜核心編號20 shoe；U02｜核心單字「動詞」｜教材印刷頁 p.31｜核心編號89 clean；U04｜核心單字「動詞」｜教材印刷頁 p.72｜核心編號57 need；U04｜核心單字「食物：一般視為不可數」｜教材印刷頁 p.70｜核心編號8 water；U01｜核心單字「動詞」｜教材印刷頁 pp.9～10｜核心編號95 go","difficulty":"易","numberAudio":"80a70fd62b642c907f0e.mp3","passage":[{"speaker":null,"text":"Be careful. There's some broken glass on the kitchen floor.","audio":"df580371cd4d9a33de34.mp3","zh":"小心。廚房地上有一些碎玻璃。"}],"question":null,"options":{"A":{"text":"Thanks. I'll go and put on my shoes.","letterAudio":"93138ad65b3704914636.mp3","audio":"3af062060007028c7de9.mp3","zh":"謝謝。我會去穿上鞋子。","letterEnd":0.537},"B":{"text":"Oh, the kitchen is new. My dad cleans it.","letterAudio":"609555d8760f27caf21b.mp3","audio":"ab5367c688c5a5e7f849.mp3","zh":"噢，廚房是新的。我爸爸會打掃它。","letterEnd":0.588},"C":{"text":"I need a glass of water.","letterAudio":"9756927a5f3791737934.mp3","audio":"3ae995e9776db164d517.mp3","zh":"我需要一杯水。","letterEnd":0.713}},"answer":"A","keyLines":[],"evidence":"對方提醒自己小心，說廚房地上有碎玻璃；A說謝謝，自己會去穿上鞋子，是回應提醒的說法。","zhCorrect":"c15c0dc4aa53d3e6513f.mp3","enText":"The answer is A. Thanks. I'll go and put on my shoes. Someone tells you to be careful because there is broken glass on the kitchen floor. The best reply is, Thanks. I'll go and put on my shoes. This reply answers the warning.","enAudio":"b984ae29b7f9fad0c600.mp3","wrong":{"B":{"text":"B說廚房是新的、爸爸會打掃，只接著 kitchen，沒有回應提醒。","audio":"9115cb7fe5d0bd02e217.mp3"},"C":{"text":"C說自己需要一杯水，只用 glass 的另一個意思「杯子」接話，沒有回應提醒。","audio":"240df600d713e3a56323.mp3"}}},{"id":"L054-Q09","type":"言談理解","point":"明確訊息","unit":"U02｜核心單字「動詞」｜教材印刷頁 p.31｜核心編號80 study；U11｜核心單字「其他名詞與兼類詞」｜教材印刷頁 pp.222～223｜核心編號23 test；U08｜核心單字「其他名詞」｜教材印刷頁 pp.152～153｜核心編號48 tomorrow；U06｜核心單字｜教材印刷頁 pp.117～120｜核心編號52 think；U02｜核心單字「時間、星期、月份與節日」｜教材印刷頁 pp.29～30｜核心編號12 Friday、9 Tuesday；U02｜核心單字「形容詞與數量用語」｜教材印刷頁 p.32｜核心編號105 next；U01｜核心單字「動詞」｜教材印刷頁 pp.9～10｜核心編號95 go；U02｜核心單字「地方名稱」｜教材印刷頁 p.30｜核心編號40 home；U01｜核心單字「副詞與相關用字」｜教材印刷頁 p.11｜核心編號128 now","difficulty":"中","numberAudio":"afbe0cf3bd8e90e335d5.mp3","passage":[{"speaker":"Girl","text":"Did you study for the science test tomorrow?","audio":"7f2024a0e64da5d5b114.mp3","zh":"女孩：你有為明天的自然科考試讀書嗎？"},{"speaker":"Boy","text":"Tomorrow? I thought the science test was on Friday.","audio":"ecce8acf954b05c5a452.mp3","zh":"男孩：明天？我以為自然科考試在星期五。"},{"speaker":"Girl","text":"No. The English test is on Friday. The science test is tomorrow, and the math test is next Tuesday.","audio":"a7e39bcb9a2a7d03a66d.mp3","zh":"女孩：不是。英文考試在星期五。自然科考試是明天，數學考試在下星期二。"},{"speaker":"Boy","text":"Oh no. I'd better go home and study now.","audio":"fd2aa0f5a8efd9b427e6.mp3","zh":"男孩：糟了。我最好現在就回家讀書。"}],"question":{"text":"When is the English test?","audio":"6fc1a444167fbb26b4bb.mp3","zh":"英文考試是什麼時候？"},"options":{"A":{"text":"Tomorrow.","letterAudio":"93138ad65b3704914636.mp3","audio":"7f0e9b65d68de48046e0.mp3","zh":"明天。","letterEnd":0.537},"B":{"text":"On Friday.","letterAudio":"609555d8760f27caf21b.mp3","audio":"fed545c8ffc553e5e074.mp3","zh":"星期五。","letterEnd":0.588},"C":{"text":"Next Tuesday.","letterAudio":"9756927a5f3791737934.mp3","audio":"dd3925b9a76235e3b475.mp3","zh":"下星期二。","letterEnd":0.713}},"answer":"B","keyLines":[2],"evidence":"女孩說「The English test is on Friday」，所以英文考試在星期五。","zhCorrect":"6c821918bd4e374df83b.mp3","enText":"The answer is B. On Friday. The girl says the English test is on Friday. The science test is tomorrow, and the math test is next Tuesday.","enAudio":"8da64ae1ad83c433dd49.mp3","wrong":{"A":{"text":"A明天是自然科考試的日子。","audio":"7f13c4f15b7f7d77842d.mp3"},"C":{"text":"C下星期二是數學考試的日子。","audio":"d08ac2533dff5bf22483.mp3"}}},{"id":"L054-Q10","type":"言談理解","point":"整體訊息","unit":"U02｜核心單字「形容詞與數量用語」｜教材印刷頁 p.32｜核心編號105 next；U02｜核心單字「時間、星期、月份與節日」｜教材印刷頁 pp.29～30｜核心編號32 month、7 minute、12 Friday；U01｜核心單字「學校」｜教材印刷頁 p.8｜核心編號33 school；U04｜核心單字「動詞」｜教材印刷頁 p.72｜核心編號54 show、52 want；U01｜核心單字「職業」｜教材印刷頁 p.7｜核心編號17 student、16 teacher；U03｜核心單字「動詞」｜教材印刷頁 p.51｜核心編號49 sing、57 play、52 join；U03｜核心單字「休閒與運動」｜教材印刷頁 pp.50～51｜核心編號21 dance；U02｜核心單字「其他名詞及相關用字」｜教材印刷頁 p.31｜核心編號67 music；U06｜核心單字｜教材印刷頁 pp.117～120｜核心編號73 magic、48 write、54 learn；U05｜主單字表「形容詞、副詞與代名詞」｜教材印刷頁 pp.90～91｜核心編號67 each；U01｜核心單字「其他名詞及相關用字」｜教材印刷頁 p.9｜核心編號59 name；U10｜核心單字「動詞」｜教材印刷頁 p.205｜核心編號47 choose；U01｜核心單字「動詞」｜教材印刷頁 pp.9～10｜核心編號92 watch","difficulty":"中","numberAudio":"d65d0cef90874a0a9664.mp3","passage":[{"speaker":null,"text":"Next month, our school will have a talent show in the hall. Students can sing, dance, play music, or do magic. Each show can be three minutes long. If you want to join, write your name and what you will do on the paper outside the music room by Friday. The music teachers will choose fifteen shows. Parents are welcome to come and watch.","audio":"2ac76d9038e56899bcfb.mp3","zh":"下個月，我們學校會在禮堂舉辦才藝表演。學生可以唱歌、跳舞、演奏音樂或表演魔術。每個表演可以有三分鐘長。如果你想參加，請在星期五以前，在音樂教室外面的紙上寫下你的名字和你要表演的內容。音樂老師們會選出十五個表演。歡迎家長來觀賞。"}],"question":{"text":"What is the notice mainly about?","audio":"6dac68d68e5260cc8c8a.mp3","zh":"這則通知主要在說什麼？"},"options":{"A":{"text":"Joining the school talent show.","letterAudio":"93138ad65b3704914636.mp3","audio":"94178447b083582ae9ae.mp3","zh":"參加學校的才藝表演。","letterEnd":0.537},"B":{"text":"Choosing music teachers for the show.","letterAudio":"609555d8760f27caf21b.mp3","audio":"b99d1ff4a5a2fe52f376.mp3","zh":"為表演選音樂老師。","letterEnd":0.588},"C":{"text":"Learning to do magic after school.","letterAudio":"9756927a5f3791737934.mp3","audio":"d6a48bec1a8132a8da9c.mp3","zh":"放學後學表演魔術。","letterEnd":0.713}},"answer":"A","keyLines":[],"evidence":"通知說下個月有才藝表演，說明可以表演什麼、每個表演多長、怎麼報名、老師會選出十五個表演，也歡迎家長來看。整段在說明怎麼參加學校的才藝表演。","zhCorrect":"be6e2668499736632a7b.mp3","enText":"The answer is A. Joining the school talent show. Next month there will be a talent show. Students can sing, dance, play music, or do magic, and they need to write their names on the paper by Friday. The notice is about joining the school talent show.","enAudio":"f22cb378c1d7e13e9503.mp3","wrong":{"B":{"text":"B通知說的是音樂老師會選出表演，不是要為表演選音樂老師。","audio":"434c3c8bf1f1084bb455.mp3"},"C":{"text":"C魔術只是可以表演的項目之一，通知沒有說要在放學後學魔術。","audio":"7b487d032bd72e51c153.mp3"}}},{"id":"L054-Q11","type":"言談理解","point":"說話者意見","unit":"U06｜核心單字｜教材印刷頁 pp.117～120｜核心編號51 hear；U01｜核心單字「形容詞」｜教材印刷頁 pp.10～11｜核心編號109 new；U08｜核心單字「交通工具」｜教材印刷頁 p.152｜核心編號40 bus；U01｜核心單字「動詞」｜教材印刷頁 pp.9～10｜核心編號95 go；U08｜核心單字「形容詞、副詞、介系詞與代名詞」｜教材印刷頁 pp.153～154｜核心編號74 straight；U01｜核心單字「學校」｜教材印刷頁 p.8｜核心編號33 school；U05｜主單字表「動詞」｜教材印刷頁 p.90｜核心編號46 take、44 stop；U02｜核心單字「時間、星期、月份與節日」｜教材印刷頁 pp.29～30｜核心編號2 morning、7 minute、18 day、1 time；U02｜核心單字「動詞」｜教材印刷頁 p.31｜核心編號92 sleep；U05｜主單字表「形容詞、副詞與代名詞」｜教材印刷頁 pp.90～91｜核心編號68 little；U03｜核心單字「形容詞」｜教材印刷頁 p.52｜核心編號63 every；U01｜核心單字「人物」｜教材印刷頁 p.8｜核心編號29 girl；U03｜核心單字「動詞」｜教材印刷頁 p.51｜核心編號47 save；U01｜核心單字「副詞與相關用字」｜教材印刷頁 p.11｜核心編號124 too；U09｜核心單字「副詞、連接詞、介系詞、代名詞與形容詞」｜教材印刷頁 pp.183～203｜核心編號59 far；U02｜核心單字「地方名稱」｜教材印刷頁 p.30｜核心編號40 home","difficulty":"中","numberAudio":"f1069488c9a68dd2293f.mp3","passage":[{"speaker":"Boy","text":"Have you heard? There's a new bus that goes straight to our school.","audio":"92d4afea7e7e6f08c275.mp3","zh":"男孩：你聽說了嗎？有一班新的公車直接開到我們學校。"},{"speaker":"Girl","text":"Yes. I took it this morning. I didn't have to change buses, and I slept twenty more minutes.","audio":"7a882f67b4e8691341ac.mp3","zh":"女孩：有啊。我今天早上搭了。我不用換車，而且多睡了二十分鐘。"},{"speaker":"Boy","text":"Isn't it crowded?","audio":"276d152a896385cc339c.mp3","zh":"男孩：車上不會很擠嗎？"},{"speaker":"Girl","text":"A little. I'm going to take it every day.","audio":"63f4c331f8b224735570.mp3","zh":"女孩：有一點。我以後每天都要搭。"}],"question":{"text":"What does the girl think about the new bus?","audio":"384c37b3ffb16f82a54b.mp3","zh":"女孩覺得新的公車怎麼樣？"},"options":{"A":{"text":"It saves her time in the morning.","letterAudio":"93138ad65b3704914636.mp3","audio":"1517100f127f3f6b7d47.mp3","zh":"讓她早上省下時間。","letterEnd":0.537},"B":{"text":"It is too crowded for her.","letterAudio":"609555d8760f27caf21b.mp3","audio":"95cfa51240c29545edfe.mp3","zh":"對她來說太擠了。","letterEnd":0.588},"C":{"text":"It stops too far from her home.","letterAudio":"9756927a5f3791737934.mp3","audio":"10f1d4808156e86ac7a5.mp3","zh":"停的地方離她家太遠。","letterEnd":0.713}},"answer":"A","keyLines":[],"evidence":"女孩說搭新公車不用換車，還多睡了二十分鐘，以後每天都要搭，可見她覺得新公車讓她早上省下時間。","zhCorrect":"50b6e42a29e6fb847949.mp3","enText":"The answer is A. It saves her time in the morning. The girl took the new bus this morning. She didn't have to change buses, and she slept twenty more minutes. She thinks the bus saves her time in the morning.","enAudio":"30a21a2c5c3933029eeb.mp3","wrong":{"B":{"text":"B女孩說只有一點擠，而且以後每天都要搭，不是太擠。","audio":"ae34bc8442931aa8d5ce.mp3"},"C":{"text":"C女孩沒有說公車站離她家很遠。","audio":"0b1d7fda5bcd81ff6643.mp3"}}},{"id":"L054-Q12","type":"言談理解","point":"明確訊息","unit":"U02｜核心單字「其他名詞及相關用字」｜教材印刷頁 p.31｜核心編號75 birthday；U02｜核心單字「時間、星期、月份與節日」｜教材印刷頁 pp.29～30｜核心編號24 May、15 week；U04｜核心單字「動詞」｜教材印刷頁 p.72｜核心編號52 want；U10｜核心單字「動詞」｜教材印刷頁 p.205｜核心編號45 make；U01｜核心單字「其他名詞及相關用字」｜教材印刷頁 p.9｜核心編號68 card；U01｜核心單字「家人與親屬」｜教材印刷頁 p.7｜核心編號10 sister、9 brother；U02｜核心單字「介系詞」｜教材印刷頁 p.33｜核心編號118 before；U01｜核心單字「人物」｜教材印刷頁 p.8｜核心編號29 girl","difficulty":"中","numberAudio":"8378e1aa8e6767b5a658.mp3","passage":[{"speaker":"Boy","text":"Is your birthday on May third? I want to make you a card.","audio":"1947404a9904152a7bba.mp3","zh":"男孩：你的生日是五月三日嗎？我想做一張卡片給你。"},{"speaker":"Girl","text":"No, that's my sister's birthday. Mine is two weeks after hers.","audio":"853e50641ee1d7e46a2b.mp3","zh":"女孩：不是，那是我姊姊（妹妹）的生日。我的生日在她的兩個星期後。"},{"speaker":"Boy","text":"Oh, I see. And your brother's?","audio":"b1b1befd5779fbd6eb77.mp3","zh":"男孩：噢，我知道了。那你哥哥（弟弟）的呢？"},{"speaker":"Girl","text":"His is one week before mine.","audio":"91d93cfdc6d61f5fada8.mp3","zh":"女孩：他的在我的前一個星期。"}],"question":{"text":"When is the girl's birthday?","audio":"f7b4acc1f80909fe3b9d.mp3","zh":"女孩的生日是什麼時候？"},"options":{"A":{"text":"On May third.","letterAudio":"93138ad65b3704914636.mp3","audio":"0cfadc1b106b74776eb7.mp3","zh":"五月三日。","letterEnd":0.537},"B":{"text":"On May tenth.","letterAudio":"609555d8760f27caf21b.mp3","audio":"1a11413f62459a99d74f.mp3","zh":"五月十日。","letterEnd":0.588},"C":{"text":"On May seventeenth.","letterAudio":"9756927a5f3791737934.mp3","audio":"73fa92ae5213beb3c3bd.mp3","zh":"五月十七日。","letterEnd":0.713}},"answer":"C","keyLines":[],"evidence":"女孩說五月三日是姊姊（妹妹）的生日，她的生日在兩個星期後，所以是五月十七日。","zhCorrect":"e4fd41329a2df01bbc81.mp3","enText":"The answer is C. On May seventeenth. May third is the sister's birthday. The girl's birthday is two weeks after that, so it is on May seventeenth. The brother's birthday is one week before hers, on May tenth.","enAudio":"975901388ba6065731c3.mp3","wrong":{"A":{"text":"A五月三日是女孩的姊姊（妹妹）的生日。","audio":"3d2e7d0649454b2b3353.mp3"},"B":{"text":"B五月十日是女孩的哥哥（弟弟）的生日，在女孩生日的前一個星期。","audio":"2f6aa26632648a37ad57.mp3"}}},{"id":"L054-Q13","type":"言談理解","point":"情境／地點推論","unit":"U02｜核心單字「地方名稱」｜教材印刷頁 p.30｜核心編號38 place、40 home；U04｜核心單字「其他名詞」｜教材印刷頁 pp.71～72｜核心編號50 tonight；U03｜核心單字「副詞」｜教材印刷頁 p.53｜核心編號74 always、82 then；U02｜核心單字「時間、星期、月份與節日」｜教材印刷頁 pp.29～30｜核心編號13 Saturday；U04｜核心單字「動詞」｜教材印刷頁 p.72｜核心編號52 want；U03｜核心單字「動詞」｜教材印刷頁 p.51｜核心編號57 play；U03｜核心單字「休閒與運動」｜教材印刷頁 pp.50～51｜核心編號16 game；U07｜核心單字「動詞」｜教材印刷頁 pp.135～136｜核心編號55 try；U04｜核心單字「食物：一般視為不可數」｜教材印刷頁 p.70｜核心編號9 ice；U02｜核心單字「介系詞」｜教材印刷頁 p.33｜核心編號118 before；U01｜核心單字「動詞」｜教材印刷頁 pp.9～10｜核心編號95 go；U05｜主單字表「場所與自然環境」｜教材印刷頁 p.88｜核心編號9 restaurant、3 market","difficulty":"中","numberAudio":"de7a313795f35cb31de8.mp3","passage":[{"speaker":"Girl","text":"This place is so crowded tonight.","audio":"1264ba1a03b4df4b41ab.mp3","zh":"女孩：今天晚上這裡好擠。"},{"speaker":"Boy","text":"It always is on Saturdays. Do you want some stinky tofu from that cart?","audio":"1da9c8950f32f1bdd943.mp3","zh":"男孩：星期六都是這樣。你要不要吃那台推車賣的臭豆腐？"},{"speaker":"Girl","text":"Sure. Then let's play that ring toss game over there.","audio":"41c71abe3f53d93a8fb4.mp3","zh":"女孩：好啊。然後我們去玩那邊的套圈圈遊戲吧。"},{"speaker":"Boy","text":"OK. And I want to try the shaved ice before we go home.","audio":"726fc444ca8ef9c78547.mp3","zh":"男孩：好。還有，回家前我想吃剉冰。"}],"question":{"text":"Where are they most likely?","audio":"c29fc0a63955a6b6afe5.mp3","zh":"他們最有可能在哪裡？"},"options":{"A":{"text":"At a restaurant.","letterAudio":"93138ad65b3704914636.mp3","audio":"4152dfd0b11dbde6c5d3.mp3","zh":"在餐廳。","letterEnd":0.537},"B":{"text":"At a night market.","letterAudio":"609555d8760f27caf21b.mp3","audio":"2518ad3d67b3989e43d1.mp3","zh":"在夜市。","letterEnd":0.588},"C":{"text":"At a toy store.","letterAudio":"9756927a5f3791737934.mp3","audio":"ab0ab302b521991ae828.mp3","zh":"在玩具店。","letterEnd":0.713}},"answer":"B","keyLines":[],"evidence":"女孩說今晚這裡好擠，男孩問她要不要吃推車賣的臭豆腐，女孩提議去玩套圈圈遊戲，男孩說回家前想吃剉冰，可知他們在夜市。","zhCorrect":"80dc6ec19d7ec3f51015.mp3","enText":"The answer is B. At a night market. It is crowded tonight. The boy offers stinky tofu from a cart, the girl wants to play a ring toss game, and the boy wants to try shaved ice. They are most likely at a night market.","enAudio":"132f1079929ab9e1b3e7.mp3","wrong":{"A":{"text":"A餐廳不會有推車賣臭豆腐和套圈圈遊戲。","audio":"f7c7ab103aadb92a67e9.mp3"},"C":{"text":"C他們是要玩套圈圈遊戲、吃小吃，不是在買玩具。","audio":"b83ee72790e11418643e.mp3"}}},{"id":"L054-Q14","type":"言談理解","point":"整體訊息","unit":"U10｜核心單字「其他名詞」｜教材印刷頁 pp.204～205｜核心編號39 news；U01｜核心單字「動詞」｜教材印刷頁 pp.9～10｜核心編號82 say、83 use、88 wash；U06｜核心單字｜教材印刷頁 pp.117～120｜核心編號7 rain、74 soon、46 buy；U02｜核心單字「時間、星期、月份與節日」｜教材印刷頁 pp.29～30｜核心編號33 year、5 night；U02｜核心單字「動詞」｜教材印刷頁 p.31｜核心編號91 know；U04｜核心單字「副詞、介系詞、連接詞與助動詞」｜教材印刷頁 p.73｜核心編號78 may；U04｜核心單字「食物：一般視為不可數」｜教材印刷頁 p.70｜核心編號8 water；U03｜核心單字「副詞」｜教材印刷頁 p.53｜核心編號82 then；U03｜核心單字「其他名詞」｜教材印刷頁 p.51｜核心編號35 shower；U10｜核心單字「蔬菜水果」｜教材印刷頁 p.204｜核心編號8 vegetable；U05｜主單字表「其他名詞」｜教材印刷頁 p.89｜核心編號30 plant；U07｜核心單字「動詞」｜教材印刷頁 pp.135～136｜核心編號51 grow","difficulty":"中","numberAudio":"5c9e4ce8a9d5bdceeaa0.mp3","passage":[{"speaker":"Girl","text":"The news says it hasn't rained much this year.","audio":"66f377ce2cbd362a59fe.mp3","zh":"女孩：新聞說今年沒下什麼雨。"},{"speaker":"Boy","text":"I know. My mom says there may be no water at night soon.","audio":"491d75555d8fdfc14204.mp3","zh":"男孩：我知道。我媽媽說很快晚上可能會沒有水。"},{"speaker":"Girl","text":"Then let's take shorter showers.","audio":"96c61ddca5fca7a35eb5.mp3","zh":"女孩：那我們洗澡時間短一點吧。"},{"speaker":"Boy","text":"And we can use the water from washing vegetables for the plants.","audio":"43aa4095d8dec4ae6896.mp3","zh":"男孩：還有我們可以用洗菜的水來澆植物。"}],"question":{"text":"What are they mainly talking about?","audio":"8919dbaa052a52791fee.mp3","zh":"他們主要在談什麼？"},"options":{"A":{"text":"Buying more water for the night.","letterAudio":"93138ad65b3704914636.mp3","audio":"0a83cdeaecbb6c2c3f16.mp3","zh":"為晚上買更多水。","letterEnd":0.537},"B":{"text":"Growing more vegetables at home.","letterAudio":"609555d8760f27caf21b.mp3","audio":"30ecca7dfc5f79c9a218.mp3","zh":"在家種更多蔬菜。","letterEnd":0.588},"C":{"text":"Using less water at home.","letterAudio":"9756927a5f3791737934.mp3","audio":"0ed6533fff802bee877a.mp3","zh":"在家少用一點水。","letterEnd":0.713}},"answer":"C","keyLines":[],"evidence":"女孩說今年沒下什麼雨，男孩說晚上可能會沒水，女孩提議洗澡時間短一點，男孩說可以用洗菜的水澆植物。整段在談在家怎麼少用一點水。","zhCorrect":"70ac805d7def625ce592.mp3","enText":"The answer is C. Using less water at home. It hasn't rained much this year, and there may be no water at night soon. The girl says they can take shorter showers, and the boy says they can use the water from washing vegetables for the plants. They are talking about using less water at home.","enAudio":"73e9e11a47c63f8e2fe6.mp3","wrong":{"A":{"text":"A男孩說晚上可能會沒水，但他們想的是少用水，沒有說要買水。","audio":"a6cad1732591716a6663.mp3"},"B":{"text":"B男孩說的是用洗菜的水澆植物，不是要種更多蔬菜。","audio":"c103152aabcaa0accb9c.mp3"}}},{"id":"L054-Q15","type":"言談理解","point":"語境猜義","unit":"U09｜核心單字「連綴動詞與其他動詞」｜教材印刷頁 pp.183～203｜核心編號44 look；U01｜核心單字「形容詞」｜教材印刷頁 pp.10～11｜核心編號98 good；U04｜核心單字「形容詞與其他用法」｜教材印刷頁 p.72｜核心編號62 sweet；U03｜核心單字「動詞」｜教材印刷頁 p.51｜核心編號55 put；U09｜核心單字「名詞：食物、餐具與度量」｜教材印刷頁 pp.183～203｜核心編號8 cheese；U06｜核心單字｜教材印刷頁 pp.117～120｜核心編號52 think、44 mean；U04｜核心單字「食物：可數與不可數用法」｜教材印刷頁 p.71｜核心編號19 chocolate；U02｜核心單字「介系詞」｜教材印刷頁 p.33｜核心編號120 inside；U02｜核心單字「時間、星期、月份與節日」｜教材印刷頁 pp.29～30｜核心編號1 time；U04｜核心單字「動詞」｜教材印刷頁 p.72｜核心編號52 want；U05｜主單字表「形容詞、副詞與代名詞」｜教材印刷頁 pp.90～91｜核心編號73 something；U01｜核心單字「人物」｜教材印刷頁 p.8｜核心編號28 boy；U09｜九、閱讀與題組補充單字（總表未逐項標頁；U09 教材頁 pp.183～203）｜savory","difficulty":"中","numberAudio":"a7624bc4d04e927cc47c.mp3","passage":[{"speaker":"Girl","text":"These pancakes look good. Are they sweet?","audio":"06c19795d415562792cf.mp3","zh":"女孩：這些鬆餅看起來好好吃。它們是甜的嗎？"},{"speaker":"Boy","text":"No, they're savory. My dad put cheese, ham, and green onions in them.","audio":"cb92990d77b97a0ca310.mp3","zh":"男孩：不是，它們是鹹的。我爸爸在裡面放了起司、火腿和青蔥。"},{"speaker":"Girl","text":"Oh. I thought there was chocolate inside.","audio":"494fb0ebf72042ff68b4.mp3","zh":"女孩：噢。我以為裡面有巧克力。"},{"speaker":"Boy","text":"Not this time. If you want something sweet, there's ice cream in the fridge.","audio":"c156490f1f7ca8dd4f6f.mp3","zh":"男孩：這次沒有。如果你想吃甜的東西，冰箱裡有冰淇淋。"}],"question":{"text":"What does the boy mean by \"savory\"?","audio":"0331d160eda2334258fa.mp3","zh":"男孩說的 \"savory\" 是什麼意思？"},"options":{"A":{"text":"Full of chocolate.","letterAudio":"93138ad65b3704914636.mp3","audio":"902f33dd7b0fd7034e6f.mp3","zh":"裡面有很多巧克力。","letterEnd":0.537},"B":{"text":"Kept in the fridge.","letterAudio":"609555d8760f27caf21b.mp3","audio":"0dc15c296a4d4528e25c.mp3","zh":"放在冰箱裡的。","letterEnd":0.588},"C":{"text":"Salty, not sweet.","letterAudio":"9756927a5f3791737934.mp3","audio":"fd897bfce7308a3a9861.mp3","zh":"鹹的，不是甜的。","letterEnd":0.713}},"answer":"C","keyLines":[],"evidence":"女孩問鬆餅是不是甜的，男孩說不是，是 savory 的，裡面放了起司、火腿和青蔥，又說想吃甜的要去冰箱拿冰淇淋，所以 savory 是鹹的、不是甜的。","zhCorrect":"dc7860748efe970abf99.mp3","enText":"The answer is C. Salty, not sweet. The girl asks if the pancakes are sweet, and the boy says no. His dad put cheese, ham, and green onions in them. So when the boy says savory, he means salty, not sweet.","enAudio":"5462e410fae95e070b85.mp3","wrong":{"A":{"text":"A女孩以為裡面有巧克力，男孩說這次沒有。","audio":"7e3b4cd3975613f7846b.mp3"},"B":{"text":"B冰箱裡放的是冰淇淋，不是鬆餅。","audio":"4e0fb4ca4193ca387227.mp3"}}},{"id":"L054-Q16","type":"言談理解","point":"說話者意見","unit":"U04｜核心單字「容器與計量詞」｜教材印刷頁 p.71｜核心編號28 glass；U03｜核心單字「動詞」｜教材印刷頁 p.51｜核心編號44 love、43 hurt；U01｜核心單字「動詞」｜教材印刷頁 pp.9～10｜核心編號90 see、82 say；U01｜核心單字「副詞與相關用字」｜教材印刷頁 p.11｜核心編號128 now；U11｜核心單字「健康與身體」｜教材印刷頁 p.222｜核心編號7 head；U01｜核心單字「人物」｜教材印刷頁 p.8｜核心編號32 people、28 boy；U09｜核心單字「連綴動詞與其他動詞」｜教材印刷頁 pp.183～203｜核心編號44 look；U11｜核心單字「其他名詞與兼類詞」｜教材印刷頁 pp.222～223｜核心編號14 care；U07｜核心單字「動詞」｜教材印刷頁 pp.135～136｜核心編號49 worry；U04｜核心單字「動詞」｜教材印刷頁 p.72｜核心編號52 want；U05｜主單字表「動詞」｜教材印刷頁 p.90｜核心編號44 stop；U08｜核心單字「動詞」｜教材印刷頁 p.153｜核心編號55 wear","difficulty":"中","numberAudio":"e699ec0cba9220192738.mp3","passage":[{"speaker":"Girl","text":"You got glasses! How do you like them?","audio":"f36e0f0d66f63e4e9660.mp3","zh":"女孩：你戴眼鏡了！你覺得怎麼樣？"},{"speaker":"Boy","text":"I love them. I can see the board clearly now, and my head doesn't hurt after class.","audio":"6e45ec934b1281576fc3.mp3","zh":"男孩：我很喜歡。我現在可以清楚看到黑板，而且下課後我的頭不會痛了。"},{"speaker":"Girl","text":"Some people say glasses make you look older.","audio":"afb3323ce99af814e905.mp3","zh":"女孩：有些人說戴眼鏡會讓人看起來比較老。"},{"speaker":"Boy","text":"I don't care about that.","audio":"3736cfc02df054d96af0.mp3","zh":"男孩：我不在乎那個。"}],"question":{"text":"What does the boy think about his glasses?","audio":"5f3ea795914124533630.mp3","zh":"男孩覺得他的眼鏡怎麼樣？"},"options":{"A":{"text":"He worries about how he looks.","letterAudio":"93138ad65b3704914636.mp3","audio":"ca4a31067d7d58df00c4.mp3","zh":"他擔心自己看起來怎麼樣。","letterEnd":0.537},"B":{"text":"He is glad to have them.","letterAudio":"609555d8760f27caf21b.mp3","audio":"fabbcb90c6a6197d30da.mp3","zh":"他很高興有了眼鏡。","letterEnd":0.588},"C":{"text":"He wants to stop wearing them.","letterAudio":"9756927a5f3791737934.mp3","audio":"e03c3f94aa3a39a05a3b.mp3","zh":"他想要不再戴眼鏡。","letterEnd":0.713}},"answer":"B","keyLines":[],"evidence":"男孩說他很喜歡眼鏡，現在可以清楚看到黑板，下課後頭也不會痛，可見他很高興有了眼鏡。","zhCorrect":"ee7ff003363e9af4884d.mp3","enText":"The answer is B. He is glad to have them. The boy says he loves his glasses. He can see the board clearly, and his head doesn't hurt after class. He doesn't care what some people say, so he is glad to have them.","enAudio":"181a30e4c938ec229a9c.mp3","wrong":{"A":{"text":"A說戴眼鏡看起來比較老的是「有些人」，男孩說他不在乎。","audio":"023fb12ec4fd0cc1d389.mp3"},"C":{"text":"C男孩說他很喜歡眼鏡，沒有說不想戴。","audio":"b326b152ec0023119466.mp3"}}},{"id":"L054-Q17","type":"言談理解","point":"明確訊息","unit":"U01｜核心單字「家人與親屬」｜教材印刷頁 p.7｜核心編號1 family；U07｜核心單字「動詞」｜教材印刷頁 pp.135～136｜核心編號46 move；U02｜核心單字「時間、星期、月份與節日」｜教材印刷頁 pp.29～30｜核心編號15 week、13 Saturday、2 morning；U05｜主單字表「動詞」｜教材印刷頁 p.90｜核心編號46 take、62 call；U02｜核心單字「動物」｜教材印刷頁 pp.30～31｜核心編號51 fish；U02｜核心單字「動詞」｜教材印刷頁 p.31｜核心編號85 give；U04｜核心單字「食物：可數與不可數用法」｜教材印刷頁 p.71｜核心編號20 food；U01｜核心單字「介系詞與禮貌用語」｜教材印刷頁 p.11｜核心編號134 please；U08｜核心單字「交通工具」｜教材印刷頁 p.152｜核心編號39 truck；U02｜核心單字「副詞與相關用字」｜教材印刷頁 p.32｜核心編號116 here","difficulty":"中","numberAudio":"eaf86862f17dfecbff4c.mp3","passage":[{"speaker":null,"text":"Hi, Ken. It's Mrs. Lee from next door. My family is moving to Kaohsiung next week, and we can't take our fish with us. Would you like them? There are four goldfish, and I can give you the fish tank and food, too. Please come over on Saturday morning. Don't come after eleven, because the moving truck will be here at twelve. Call me if you can't come.","audio":"fac34b83c03d09b51eb2.mp3","zh":"嗨，Ken。我是隔壁的李太太。我們家下星期要搬到高雄，沒辦法把我們的魚帶走。你想要牠們嗎？有四條金魚，我也可以把魚缸和魚食給你。請在星期六早上過來。不要超過十一點才來，因為搬家的卡車十二點會到這裡。如果你不能來，打電話給我。"}],"question":{"text":"When should Ken go to get the fish?","audio":"9e4756a669844acfe86d.mp3","zh":"Ken 應該什麼時候去拿魚？"},"options":{"A":{"text":"On Saturday morning.","letterAudio":"93138ad65b3704914636.mp3","audio":"354a5e2802c44b7d50ed.mp3","zh":"星期六早上。","letterEnd":0.537},"B":{"text":"Sometime next week.","letterAudio":"609555d8760f27caf21b.mp3","audio":"20ab7cf637b7657e792d.mp3","zh":"下星期的某個時候。","letterEnd":0.588},"C":{"text":"At twelve o'clock.","letterAudio":"9756927a5f3791737934.mp3","audio":"5cc95d0f837e83ce6c32.mp3","zh":"十二點。","letterEnd":0.713}},"answer":"A","keyLines":[0],"evidence":"李太太說「Please come over on Saturday morning」，所以 Ken 應該星期六早上去拿魚。","zhCorrect":"359c24332fcb46ff8796.mp3","enText":"The answer is A. On Saturday morning. Mrs. Lee asks Ken to come over on Saturday morning, before eleven. Her family is moving next week, and the moving truck will be there at twelve.","enAudio":"544e10469988fb4880ce.mp3","wrong":{"B":{"text":"B下星期是李太太家要搬去高雄的時間。","audio":"c255e1d6b9742b0460c8.mp3"},"C":{"text":"C十二點是搬家卡車會到的時間，李太太說十一點以後不要來。","audio":"60e2277731b387ec0a6c.mp3"}}},{"id":"L054-Q18","type":"言談理解","point":"整體訊息","unit":"U01｜核心單字「家人與親屬」｜教材印刷頁 p.7｜核心編號1 family；U07｜核心單字「動詞」｜教材印刷頁 pp.135～136｜核心編號46 move；U01｜核心單字「形容詞」｜教材印刷頁 pp.10～11｜核心編號104 small、103 big、109 new；U05｜主單字表「場所與自然環境」｜教材印刷頁 p.88｜核心編號19 sea；U06｜核心單字｜教材印刷頁 pp.117～120｜核心編號49 hate、47 teach、74 soon、54 learn；U02｜核心單字「動詞」｜教材印刷頁 p.31｜核心編號91 know；U03｜核心單字「副詞」｜教材印刷頁 p.53｜核心編號82 then；U01｜核心單字「人物」｜教材印刷頁 p.8｜核心編號28 boy、32 people；U05｜主單字表「動詞」｜教材印刷頁 p.90｜核心編號42 live；U02｜核心單字「動物」｜教材印刷頁 pp.30～31｜核心編號51 fish；U09｜核心單字「名詞：自然、生物與一般概念」｜教材印刷頁 pp.183～203｜核心編號27 rock；U03｜核心單字「形容詞」｜教材印刷頁 p.52｜核心編號63 every；U02｜核心單字「時間、星期、月份與節日」｜教材印刷頁 pp.29～30｜核心編號16 weekend；U01｜核心單字「其他名詞及相關用字」｜教材印刷頁 p.9｜核心編號59 name；U02｜核心單字「形容詞與數量用語」｜教材印刷頁 p.32｜核心編號106 many；U01｜核心單字「副詞與相關用字」｜教材印刷頁 p.11｜核心編號128 now；U04｜核心單字「副詞、介系詞、連接詞與助動詞」｜教材印刷頁 p.73｜核心編號71 else；U03｜核心單字「動詞」｜教材印刷頁 p.51｜核心編號44 love","difficulty":"中","numberAudio":"a59239c9b04974676db1.mp3","passage":[{"speaker":null,"text":"When I was ten, my family moved from Taipei to a small town by the sea. At first, I hated it. There was no MRT, no big stores, and I didn't know anyone. Then a boy who lived next door taught me how to fish from the rocks. We went fishing every weekend. Soon I knew the names of many fish and many people in town. Now I can't think of living anywhere else.","audio":"9fc44db7f2fe59880e39.mp3","zh":"我十歲的時候，我們家從臺北搬到海邊的一個小鎮。一開始，我很討厭那裡。那裡沒有捷運、沒有大商店，我也不認識任何人。後來，住在隔壁的一個男孩教我在岩石上釣魚。我們每個週末都去釣魚。很快地，我就知道了很多魚的名字，也認識了鎮上很多人。現在我無法想像住在別的地方。"}],"question":{"text":"What is the speaker mainly talking about?","audio":"71dae5b7723fd5c946f5.mp3","zh":"說話者主要在談什麼？"},"options":{"A":{"text":"Why the speaker's family moved away from Taipei.","letterAudio":"93138ad65b3704914636.mp3","audio":"f22622622102a1829df0.mp3","zh":"說話者一家為什麼從臺北搬走。","letterEnd":0.537},"B":{"text":"How the speaker came to love a new town.","letterAudio":"609555d8760f27caf21b.mp3","audio":"85035a9b56d903dda60e.mp3","zh":"說話者怎麼愛上一個新的小鎮。","letterEnd":0.588},"C":{"text":"How the speaker learned the names of many fish.","letterAudio":"9756927a5f3791737934.mp3","audio":"8e991c8f8fb1c6625aea.mp3","zh":"說話者怎麼學會很多魚的名字。","letterEnd":0.713}},"answer":"B","keyLines":[],"evidence":"說話者搬到海邊小鎮，一開始很討厭，後來隔壁的男孩教說話者釣魚，認識了很多魚和鎮上的人，現在無法想像住在別的地方。整段在說說話者怎麼愛上一個新的小鎮。","zhCorrect":"5be63b3855bd3ce40dac.mp3","enText":"The answer is B. How the speaker came to love a new town. The speaker moved to a small town by the sea and hated it at first. Then a boy next door taught the speaker to fish, and the speaker met many people. The talk is about how the speaker came to love a new town.","enAudio":"46c055c2fe2888fff6b7.mp3","wrong":{"A":{"text":"A說話者只說一家從臺北搬到小鎮，沒有說為什麼搬家。","audio":"22085dc9ee73684fd738.mp3"},"C":{"text":"C知道很多魚的名字只是說話者愛上小鎮過程中的一部分。","audio":"3405482f6aabdf790ee7.mp3"}}}]}</script>
+  <script>
+    'use strict';
+    const BANK = JSON.parse(document.getElementById('bank-data').textContent);
+    const AUDIO_BASE = "audio/L054/";
+    const HOME = "./";
+    const REPORT_URL = "https://script.google.com/macros/s/AKfycbx2tFuJpOCA37StHVMaVtLLYnt8T_GFauh9qK9xJeU6xCfhHd154W95X6hH_3ObQGuWwg/exec";  // teacher's Google Apps Script endpoint; null = reporting off
+    const P = BANK.pauses;
+    const $ = id => document.getElementById(id);
+    const answerButtons = [...document.querySelectorAll('[data-answer]')];
+    document.querySelectorAll('.bear-slot').forEach(slot => slot.replaceWith($('bearArt').content.cloneNode(true)));
+    function setMood(mood) {
+      document.querySelectorAll('.bear').forEach(bear => {
+        bear.dataset.mood = mood;
+        bear.style.animation = 'none'; void bear.getBoundingClientRect(); bear.style.animation = '';  // replay the hop
+      });
+    }
+    function renderDots() {
+      const dots = $('dots');
+      dots.replaceChildren();
+      const record = session[mode === 'retry' ? 'retry' : 'answers'];
+      order.forEach((index, i) => {
+        const dot = document.createElement('i');
+        const done = record.find(a => a.id === BANK.questions[index].id);
+        dot.className = done ? (done.correct ? 'right' : 'wrong') : (i === cursor ? 'now' : '');
+        dots.appendChild(dot);
+      });
+    }
+    const CANCEL = Symbol('cancel');
+    const audio = new Audio();
+    audio.preload = 'auto';
+
+    let order = [], cursor = 0, session = null, mode = 'first';
+    let token = 0, paused = false, accepting = false, abortClip = null;
+
+    $('badge').textContent = '🎧 基本問答 8 題＋言談理解 10 題' + (BANK.status === '待 Live 試用' ? ' · 試用版' : '');
+    $('badge').title = `${BANK.volume} ${BANK.version}`;
+    $('title').textContent = `第${BANK.number}回英文聽力`;
+    document.title = `第${BANK.number}回英文聽力｜MP3 練習`;
+
+    const PREF_KEY = 'listening-player-prefs';
+    let prefs = {};
+    try { prefs = JSON.parse(localStorage.getItem(PREF_KEY)) || {}; } catch { prefs = {}; }
+    const savePrefs = () => { try { localStorage.setItem(PREF_KEY, JSON.stringify(prefs)); } catch {} };
+    for (const id of ['mode', 'rate', 'lang']) {
+      if (prefs[id]) $(id).value = prefs[id];
+      $(id).addEventListener('change', () => { prefs[id] = $(id).value; savePrefs(); if (id === 'mode') describeMode(); });
+    }
+    let showZh = Boolean(prefs.showZh);
+    let listenMode = $('mode').value;
+    function describeMode() {
+      $('intro').textContent = $('mode').value === 'exam'
+        ? '會考模式：和真正的會考一樣，A／B／C 選項印在畫面上，先有幾秒讀選項，接著播題號、原文兩次、英文問題兩次（基本問答沒有），選項不唸出來。播完才可作答。'
+        : '磨耳朵模式：選項不顯示，改成唸出來。每題播題號、原文兩次、英文問題兩次（基本問答沒有）、A／B／C 各兩次。播完才可作答。';
+    }
+    describeMode();
+
+    // Completion records live in this browser only; the site's index page reads the same key.
+    const RECORD_KEY = 'listening-records-v1';
+    const NAME_KEY = 'listening-student-name';
+    const readStore = key => { try { return localStorage.getItem(key); } catch { return null; } };
+    const loadRecords = () => { try { return JSON.parse(readStore(RECORD_KEY)) || {}; } catch { return {}; } };
+    const modeName = m => m === 'exam' ? '會考模式' : '磨耳朵模式';
+    const when = iso => new Date(iso).toLocaleString('zh-TW', { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    function saveRecord() {
+      const all = loadRecords();
+      const list = all[BANK.volume] || [];
+      const record = {
+        finishedAt: session.finishedAt, student: readStore(NAME_KEY) || '', version: BANK.version, mode: session.listenMode,
+        correct: session.answers.filter(a => a.correct).length, total: session.answers.length,
+        answers: session.answers.map(({ id, picked, correct, replays }) => ({ id, picked, correct, replays })),
+        retry: session.retry.map(({ id, picked, correct }) => ({ id, picked, correct })),
+      };
+      const at = list.findIndex(r => r.finishedAt === record.finishedAt);
+      if (at >= 0) list[at] = record; else list.push(record);
+      all[BANK.volume] = list;
+      try { localStorage.setItem(RECORD_KEY, JSON.stringify(all)); return true; } catch { return false; }
+    }
+    function showPast() {
+      const list = loadRecords()[BANK.volume] || [];
+      const last = list[list.length - 1];
+      $('past').hidden = !last;
+      if (last) $('past').textContent = `✅ 你已經完成過這一回 ${list.length} 次。上次：${when(last.finishedAt)}，${modeName(last.mode)}，首次答對 ${last.correct}／${last.total} 題。`;
+      const body = $('history');
+      body.replaceChildren();
+      for (const r of [...list].reverse()) {
+        const tr = document.createElement('tr');
+        const retry = r.retry.length ? `${r.retry.filter(a => a.correct).length}／${r.retry.length}` : '—';
+        for (const text of [when(r.finishedAt), modeName(r.mode), `${r.correct}／${r.total}`, retry]) {
+          const td = document.createElement('td'); td.textContent = text; tr.appendChild(td);
+        }
+        body.appendChild(tr);
+      }
+    }
+    if (HOME) { $('home').href = HOME; $('home').hidden = false; }
+    $('playerName').value = readStore(NAME_KEY) || '';
+    $('playerName').addEventListener('input', () => {
+      try { localStorage.setItem(NAME_KEY, $('playerName').value.trim().slice(0, 20)); } catch {}
+    });
+    showPast();
+
+    // Optional reporting to the teacher's Google Sheet. Unsent reports wait in an outbox and retry on the next visit.
+    const OUTBOX_KEY = 'listening-outbox', DEVICE_KEY = 'listening-device-id';
+    function deviceId() {
+      let id = readStore(DEVICE_KEY);
+      if (!id) { id = Math.random().toString(36).slice(2, 10); try { localStorage.setItem(DEVICE_KEY, id); } catch {} }
+      return id;
+    }
+    const loadOutbox = () => { try { return JSON.parse(readStore(OUTBOX_KEY)) || []; } catch { return []; } };
+    const saveOutbox = list => { try { localStorage.setItem(OUTBOX_KEY, JSON.stringify(list)); } catch {} };
+    async function flushOutbox() {
+      if (!REPORT_URL) return true;
+      const pending = loadOutbox();
+      const left = [];
+      for (const item of pending) {
+        try { await fetch(REPORT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(item) }); }
+        catch { left.push(item); }
+      }
+      saveOutbox(left);
+      return left.length === 0;
+    }
+    async function report() {
+      if (!REPORT_URL) return null;
+      const first = session.answers;
+      saveOutbox([...loadOutbox(), {
+        student: readStore(NAME_KEY) || '未署名', device: deviceId(), volume: BANK.volume, number: BANK.number,
+        finishedAt: session.finishedAt, mode: modeName(session.listenMode), correct: first.filter(a => a.correct).length, total: first.length,
+        wrong: first.filter(a => !a.correct).map(a => 'Q' + Number(a.id.slice(-2))).join('、'),
+        replays: first.reduce((s, a) => s + a.replays, 0),
+      }]);
+      return flushOutbox();
+    }
+    flushOutbox();
+
+    const current = () => BANK.questions[order[cursor]];
+    const status = text => { $('status').textContent = text; };
+    const setAnswers = on => { answerButtons.forEach(b => b.disabled = !on); accepting = on; };
+
+    function stop() {
+      token++;
+      audio.pause();
+      if (abortClip) { const a = abortClip; abortClip = null; a(CANCEL); }
+    }
+    function sleep(ms, t) {
+      return new Promise((resolve, reject) => {
+        let left = ms;
+        const tick = () => {
+          if (t !== token) return reject(CANCEL);
+          if (!paused) left -= 50;
+          if (left <= 0) return resolve();
+          setTimeout(tick, 50);
+        };
+        tick();
+      });
+    }
+    function clip(file, t, stopAt) {
+      return new Promise((resolve, reject) => {
+        if (t !== token) return reject(CANCEL);
+        let timer = null;
+        const clear = () => { clearTimeout(timer); audio.onplaying = audio.onpause = null; };
+        abortClip = err => { clear(); reject(err); };
+        audio.src = AUDIO_BASE + file;
+        audio.playbackRate = Number($('rate').value);
+        if (stopAt) {
+          // Cut off the clip's trailing silence; re-armed after a pause/resume.
+          const arm = () => {
+            clearTimeout(timer);
+            timer = setTimeout(() => {
+              if (t !== token) return;
+              if (audio.currentTime < stopAt - 0.03) return arm();
+              clear(); abortClip = null; audio.pause(); resolve();
+            }, Math.max(0, (stopAt - audio.currentTime) / audio.playbackRate * 1000));
+          };
+          audio.onplaying = arm;
+          audio.onpause = () => clearTimeout(timer);
+        }
+        audio.onended = () => { clear(); abortClip = null; resolve(); };
+        audio.onerror = () => { clear(); abortClip = null; reject(new Error(`找不到或無法播放音檔：${file}`)); };
+        audio.play().catch(err => { if (!paused && t === token && err.name !== 'AbortError') { abortClip = null; reject(err); } });
+      });
+    }
+    async function run(steps) {
+      stop();
+      const t = token;
+      try {
+        for (const step of steps) {
+          if (typeof step === 'number') await sleep(step, t);
+          else if (typeof step === 'function') step();
+          else if (typeof step === 'object') await clip(step.file, t, step.until);
+          else await clip(step, t);
+        }
+        return true;
+      } catch (err) {
+        if (err === CANCEL) return false;
+        status('');
+        $('status').innerHTML = '';
+        const box = document.createElement('div');
+        box.className = 'error';
+        box.textContent = `${err.message}。請確認「音檔」資料夾與這個網頁放在原本的相對位置，不要單獨搬走網頁。`;
+        $('status').appendChild(box);
+        $('replay').disabled = false;
+        return false;
+      }
+    }
+
+    const letterStep = o => ({ file: o.letterAudio, until: o.letterEnd + 0.12 });
+    function questionSteps(q, preview) {
+      const steps = [];
+      if (preview && listenMode === 'exam') {
+        // Reading time comes before the question number, like turning to the item in the test booklet.
+        for (let left = Math.ceil(P.preview_options / 1000); left > 0; left--) {
+          steps.push(() => status(`先看一下 A／B／C 選項…${left}`), Math.min(1000, P.preview_options - (left - 1) * 1000));
+        }
+      }
+      steps.push(() => status('播放中，請仔細聽。'), q.numberAudio, P.after_number);
+      for (let round = 0; round < 2; round++) {
+        q.passage.forEach((line, i) => { steps.push(line.audio); if (i < q.passage.length - 1) steps.push(P.between_lines); });
+        steps.push(round === 0 ? P.between_repeats : P.after_passage);
+      }
+      if (q.question) steps.push(q.question.audio, P.between_repeats, q.question.audio, P.after_passage);
+      if (listenMode === 'exam') return steps;
+      for (const letter of ['A', 'B', 'C']) {
+        const o = q.options[letter];
+        steps.push(letterStep(o), P.after_letter, o.audio, P.between_lines, letterStep(o), P.after_letter, o.audio, P.between_options);
+      }
+      return steps;
+    }
+    function feedbackSteps(q, picked) {
+      const lang = $('lang').value, steps = [picked === q.answer ? BANK.common.correct : BANK.common.wrong, 400];
+      if (lang !== 'en') {
+        if (picked !== q.answer) steps.push(q.wrong[picked].audio, 500);
+        steps.push(q.zhCorrect, 600);
+      }
+      if (lang !== 'zh') steps.push(q.enAudio);
+      return steps;
+    }
+
+    async function playQuestion(preview = false) {
+      const q = current();
+      paused = false;
+      $('pause').textContent = '暫停';
+      $('pause').disabled = false;
+      $('replay').disabled = true;
+      setAnswers(false);
+      status(listenMode === 'exam' ? '先看一下 A／B／C 選項，播放開始後仔細聽。' : '播放中，請仔細聽。');
+      setMood('listening');
+      if (await run(questionSteps(q, preview))) {
+        $('replay').disabled = false;
+        setMood('idle');
+        setAnswers(true);
+        status('請按 A、B 或 C（也可以用鍵盤）。');
+      }
+    }
+    function showQuestion() {
+      const q = current();
+      $('stage').hidden = false;
+      $('finished').hidden = true;
+      $('review').hidden = true;
+      answerButtons.forEach(b => b.classList.remove('chosen'));
+      renderDots();
+      const label = mode === 'retry' ? '錯題重練' : '首次作答';
+      $('progress').textContent = `第 ${BANK.number} 回 · ${label} · 第 ${cursor + 1}／${order.length} 題`;
+      $('heading').textContent = `Question ${Number(q.id.slice(-2))}`;
+      const booklet = $('booklet');
+      booklet.replaceChildren();
+      booklet.hidden = listenMode !== 'exam';
+      if (listenMode === 'exam') for (const letter of ['A', 'B', 'C']) {
+        const p = document.createElement('p');
+        p.textContent = `(${letter}) ${q.options[letter].text}`;
+        booklet.appendChild(p);
+      }
+      playQuestion(true);
+    }
+
+    function renderReview(q, picked) {
+      const right = picked === q.answer;
+      const fb = $('feedback');
+      fb.className = 'feedback' + (right ? '' : ' wrong');
+      fb.replaceChildren();
+      const add = (tag, text) => { const p = document.createElement('p'); if (tag) { const s = document.createElement('span'); s.className = 'tag'; s.textContent = tag + ' '; p.appendChild(s); } p.appendChild(document.createTextNode(text)); fb.appendChild(p); };
+      add(right ? '🎉 答對了！' : '💪 差一點點！', `正確答案是 ${q.answer}. ${q.options[q.answer].text}`);
+      if (!right) add(`你選 ${picked}：`, q.wrong[picked].text);
+      add('為什麼：', q.evidence);
+      add('English:', q.enText);
+      add('考點：', `${q.type}｜${q.point}｜${q.unit}`);
+
+      const tr = $('transcript');
+      tr.replaceChildren();
+      tr.classList.toggle('hide-zh', !showZh);
+      const head = document.createElement('div');
+      head.className = 'head';
+      head.innerHTML = '<h3>聽到的內容（黃底是關鍵句，按 🔊 單獨重播）</h3><label><input type="checkbox" id="zhToggle"> 顯示中文翻譯</label>';
+      tr.appendChild(head);
+      const zhToggle = head.querySelector('#zhToggle');
+      zhToggle.checked = showZh;
+      zhToggle.addEventListener('change', () => { showZh = zhToggle.checked; prefs.showZh = showZh; savePrefs(); tr.classList.toggle('hide-zh', !showZh); });
+      const addLine = (className, prefix, en, zh, clips) => {
+        const p = document.createElement('p');
+        p.className = 'line ' + className;
+        const say = document.createElement('button');
+        say.className = 'say';
+        say.textContent = '🔊';
+        say.setAttribute('aria-label', '重播這一句');
+        say.addEventListener('click', () => run(clips));
+        const body = document.createElement('div');
+        if (prefix) { const s = document.createElement('span'); s.className = 'spk'; s.textContent = prefix; body.appendChild(s); }
+        const e = document.createElement('span'); e.className = 'en'; e.textContent = en; body.appendChild(e);
+        if (zh) { const z = document.createElement('span'); z.className = 'zh'; z.textContent = zh; body.appendChild(z); }
+        p.append(say, body);
+        tr.appendChild(p);
+      };
+      q.passage.forEach((line, i) => addLine(q.keyLines.includes(i) ? 'key' : '', line.speaker ? line.speaker + ':' : '', line.text, line.zh, [line.audio]));
+      if (q.question) addLine('', 'Q:', q.question.text, q.question.zh, [q.question.audio]);
+      for (const letter of ['A', 'B', 'C']) {
+        const o = q.options[letter];
+        const cls = 'opt' + (letter === q.answer ? ' correct' : '') + (letter === picked && !right ? ' picked' : '');
+        addLine(cls, `${letter}.`, o.text, o.zh, [letterStep(o), P.after_letter, o.audio]);
+      }
+      $('reportId').textContent = q.id;
+      $('replayKey').hidden = q.keyLines.length === 0;
+      $('review').hidden = false;
+    }
+
+    async function answer(letter) {
+      if (!accepting || paused) return;
+      const q = current();
+      setAnswers(false);
+      $('replay').disabled = true;
+      answerButtons.find(b => b.dataset.answer === letter).classList.add('chosen');
+      const record = session[mode === 'retry' ? 'retry' : 'answers'];
+      record.push({ id: q.id, picked: letter, answer: q.answer, correct: letter === q.answer, type: q.type, point: q.point, unit: q.unit,
+        replays: session.replays[q.id] || 0, answeredAt: new Date().toISOString() });
+      renderReview(q, letter);
+      renderDots();
+      setMood(letter === q.answer ? 'happy' : 'oops');
+      status('講解播放中；聽完可以重聽關鍵句，或按「下一題」。');
+      if (await run(feedbackSteps(q, letter))) status('講解結束。按「下一題」繼續。');
+    }
+
+    function next() {
+      stop();
+      if (cursor + 1 < order.length) { cursor++; showQuestion(); return; }
+      finish();
+    }
+
+    function finish() {
+      stop();
+      $('stage').hidden = true;
+      $('finished').hidden = false;
+      $('pause').disabled = true;
+      $('replay').disabled = true;
+      const first = session.answers;
+      const right = first.filter(a => a.correct).length;
+      let text = `首次作答 ${first.length} 題，答對 ${right} 題（${Math.round(right / first.length * 100)}%）。`;
+      if (session.retry.length) {
+        const fixed = session.retry.filter(a => a.correct).length;
+        text += ` 錯題重練 ${session.retry.length} 題，答對 ${fixed} 題。`;
+      }
+      $('score').textContent = text;
+      $('scoreBig').textContent = `${right} / ${first.length}`;
+      $('stars').textContent = right >= 16 ? '⭐⭐⭐' : right >= 12 ? '⭐⭐' : '⭐';
+      $('cheer').textContent = right === first.length ? '全對！小熊幫你拍拍手 👏'
+        : right >= 16 ? '好厲害！只差一點點就全對了！'
+        : right >= 12 ? '做得不錯！看看下面的錯題，再練一次會更好。'
+        : '辛苦了！先把錯題重練一遍，小熊陪你慢慢來 🐻';
+      setMood(right >= 12 ? 'happy' : 'idle');
+      const firstFinish = !session.finishedAt;
+      if (firstFinish) session.finishedAt = new Date().toISOString();
+      const name = readStore(NAME_KEY);
+      $('saved').textContent = saveRecord()
+        ? `📅 完成時間：${when(session.finishedAt)}${name ? `（${name}）` : ''}。紀錄已存在這台裝置${HOME ? '，回到目錄就看得到' : ''}。`
+        : `📅 完成時間：${when(session.finishedAt)}。這個瀏覽器不允許儲存紀錄（例如無痕模式），請按「下載作答紀錄」保存。`;
+      showPast();
+      // The record still goes to the teacher's sheet, but the student sees no notice about it:
+      // students are told to copy the summary themselves as their check-in.
+      if (firstFinish && REPORT_URL) report();
+
+      const groups = new Map();
+      for (const a of first) {
+        const key = `${a.type}｜${a.point}`;
+        const g = groups.get(key) || { right: 0, total: 0 };
+        g.total++; if (a.correct) g.right++;
+        groups.set(key, g);
+      }
+      const body = $('byPoint');
+      body.replaceChildren();
+      [...groups.entries()].sort((x, y) => x[1].right / x[1].total - y[1].right / y[1].total).forEach(([key, g]) => {
+        const tr = document.createElement('tr');
+        const pct = Math.round(g.right / g.total * 100);
+        tr.innerHTML = '<td></td><td></td><td><div class="bar"><span></span></div></td>';
+        tr.children[0].textContent = key;
+        tr.children[1].textContent = `${g.right}／${g.total}`;
+        tr.querySelector('.bar span').style.width = pct + '%';
+        if (pct < 100) tr.querySelector('.bar span').style.background = 'var(--bad)';
+        body.appendChild(tr);
+      });
+
+      const wrong = first.filter(a => !a.correct);
+      const list = $('wrongList');
+      list.replaceChildren();
+      if (!wrong.length) { list.textContent = '全對，沒有錯題！'; }
+      else {
+        const table = document.createElement('table');
+        table.innerHTML = '<thead><tr><th>題號</th><th>你選／正解</th><th>考點</th><th>課本出處</th></tr></thead>';
+        const tb = document.createElement('tbody');
+        for (const a of wrong) {
+          const tr = document.createElement('tr');
+          tr.innerHTML = '<td></td><td></td><td></td><td></td>';
+          tr.children[0].textContent = a.id.slice(-3);
+          tr.children[1].textContent = `${a.picked} → ${a.answer}`;
+          tr.children[2].textContent = a.point;
+          tr.children[3].textContent = a.unit;
+          tb.appendChild(tr);
+        }
+        table.appendChild(tb);
+        list.appendChild(table);
+      }
+      $('retryWrong').disabled = !wrong.length;
+      $('prompt').value = claudePrompt();
+    }
+
+    function claudePrompt() {
+      const first = session.answers;
+      const wrong = first.filter(a => !a.correct);
+      const lines = [
+        `你是我的國中會考英聽家教。我剛做完第${BANK.number}回（${session.listenMode === 'exam' ? '會考模式' : '磨耳朵模式'}），${first.length} 題答對 ${first.length - wrong.length} 題。請用繁體中文陪我檢討錯題：`,
+        '1. 一次只講一題：先問我當時聽到什麼、為什麼這樣選，等我回答再解釋。',
+        '2. 最後告訴我錯題的共同原因，並出 3 題類似的題目給我練習（我作答後再公布答案）。',
+        '下面的原文與選項來自題庫，請照原樣使用，不要改寫。',
+        '',
+      ];
+      if (!wrong.length) lines.push('這回全對。請改為挑 3 題難度較高的題目，考我能不能說出答題關鍵句，再出 3 題進階類似題。', '');
+      for (const a of wrong) {
+        const q = BANK.questions.find(x => x.id === a.id);
+        lines.push(`【第 ${Number(q.id.slice(-2))} 題｜${q.type}｜${q.point}】`);
+        lines.push('原文：' + q.passage.map(l => (l.speaker ? l.speaker + ': ' : '') + l.text).join(' / '));
+        if (q.question) lines.push('問題：' + q.question.text);
+        lines.push('選項：' + ['A', 'B', 'C'].map(k => `${k}. ${q.options[k].text}`).join('  '));
+        lines.push(`我選 ${a.picked}，正解是 ${q.answer}。`);
+        lines.push(`解析：${q.evidence} ${q.wrong[a.picked].text}`);
+        lines.push('');
+      }
+      const weak = [...new Set(wrong.map(a => a.point))];
+      if (weak.length) lines.push('錯題考點：' + weak.join('、'));
+      return lines.join('\n');
+    }
+
+    function begin(newOrder, newMode) {
+      // An inline field, not prompt(): a blocked pop-up must never stop the quiz from starting.
+      if (REPORT_URL && newMode === 'first' && !readStore(NAME_KEY)) $('nameRow').hidden = false;
+      order = newOrder; cursor = 0; mode = newMode;
+      listenMode = $('mode').value;
+      if (newMode === 'first') session = { volume: BANK.volume, version: BANK.version, sourceSha256: BANK.sourceSha256, listenMode,
+        startedAt: new Date().toISOString(), answers: [], retry: [], replays: {} };
+      else session.retry = [];
+      $('start').textContent = '重新開始';
+      showQuestion();
+    }
+
+    $('start').addEventListener('click', () => {
+      if (session && session.answers.length && !confirm('要從第 1 題重新開始嗎？尚未下載的作答紀錄會被取代。')) return;
+      begin(BANK.questions.map((_, i) => i), 'first');
+    });
+    $('restart').addEventListener('click', () => $('start').click());
+    $('retryWrong').addEventListener('click', () => {
+      const ids = session.answers.filter(a => !a.correct).map(a => a.id);
+      begin(BANK.questions.map((q, i) => ids.includes(q.id) ? i : -1).filter(i => i >= 0), 'retry');
+    });
+    $('replay').addEventListener('click', () => {
+      if (!session || $('replay').disabled) return;
+      const q = current();
+      session.replays[q.id] = (session.replays[q.id] || 0) + 1;
+      playQuestion();
+    });
+    $('pause').addEventListener('click', () => {
+      if (!paused) { paused = true; audio.pause(); $('pause').textContent = '繼續'; status('已暫停。'); }
+      else { paused = false; $('pause').textContent = '暫停'; if (abortClip) audio.play().catch(() => {}); status('繼續播放。'); }
+    });
+    $('replayKey').addEventListener('click', () => {
+      const q = current();
+      const steps = [];
+      q.keyLines.forEach(i => steps.push(q.passage[i].audio, P.between_lines));
+      status('重聽關鍵句。');
+      run(steps).then(done => done && status('可以再聽一次，或按「下一題」。'));
+    });
+    $('replayPassage').addEventListener('click', () => {
+      const q = current();
+      const steps = [];
+      q.passage.forEach(line => steps.push(line.audio, P.between_lines));
+      status('重聽原文（一次）。');
+      run(steps).then(done => done && status('可以再聽一次，或按「下一題」。'));
+    });
+    $('replayFeedback').addEventListener('click', () => {
+      const record = session[mode === 'retry' ? 'retry' : 'answers'];
+      const last = record[record.length - 1];
+      status('重播講解。');
+      run(feedbackSteps(current(), last.picked)).then(done => done && status('講解結束。按「下一題」繼續。'));
+    });
+    $('next').addEventListener('click', next);
+    document.addEventListener('keydown', e => {
+      if (e.altKey || e.ctrlKey || e.metaKey || e.repeat) return;
+      const k = e.key.toUpperCase();
+      if (['A', 'B', 'C'].includes(k)) answer(k);
+    });
+    answerButtons.forEach(b => b.addEventListener('click', () => answer(b.dataset.answer)));
+    $('export').addEventListener('click', () => {
+      const blob = new Blob([JSON.stringify({ student: readStore(NAME_KEY) || '', ...session }, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = `${BANK.volume}_作答紀錄_${new Date().toISOString().slice(0, 10)}.json`; a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    });
+    $('copyTeacher').addEventListener('click', async () => {
+      const first = session.answers;
+      const wrong = first.filter(a => !a.correct).map(a => 'Q' + Number(a.id.slice(-2)));
+      const lines = [`🎧 ${readStore(NAME_KEY) || '未署名'}｜${when(session.finishedAt)}`,
+        `第${BANK.number}回 ${first.length - wrong.length}/${first.length}（${modeName(session.listenMode)}）${wrong.length ? '錯：' + wrong.join('、') : '全對💯'}`];
+      if (session.retry.length) lines.push(`錯題重練 ${session.retry.filter(a => a.correct).length}/${session.retry.length}`);
+      try { await navigator.clipboard.writeText(lines.join('\n')); $('copyNote').textContent = '已複製，貼到 LINE 傳給老師就好。'; }
+      catch { $('copyNote').textContent = lines.join(' ／ '); }
+    });
+    $('copyPrompt').addEventListener('click', async () => {
+      const text = $('prompt').value;
+      try { await navigator.clipboard.writeText(text); $('copyNote').textContent = '已複製。打開 ChatGPT 貼上就可以開始檢討；也可以開語音模式，讓 ChatGPT 用說的講解。'; }
+      catch { $('prompt').closest('details').open = true; $('prompt').select(); $('copyNote').textContent = '無法自動複製，請展開下方內容手動複製（Ctrl+C）。'; }
+    });
+  </script>
+</body>
+</html>
